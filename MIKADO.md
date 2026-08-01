@@ -88,6 +88,7 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 | X1 | Post-launch tweaks: tour-completion cookie, toggle change highlighting, gaps-panel combination hint | `src/ui/*` | Return visit after full tour lands in explore mode; changed values flash on toggle; gaps hint names all active corrections | Vitest on hint fn + manual | low | S | done — PR #10 |
 | X2 | Trim gaps-panel body text (hint carries the combining message) | `src/ui/App.tsx` | Sentence removed | copy-only (§4 exception) | low | S | done — PR #11 |
 | X3 | Real MMLU pair with verdict flips: vicuna-13b-v1.5 vs Llama-2-13b-hf, gap ≈2.1pp | `scripts/`, `public/datasets/mmlu-close.csv`, `src/data/bundled.*`, `src/ui/About.tsx` | Toggling uN→uC→pC on the bundled pair flips real→too close→real, asserted with ≥0.1pp boundary comfort | Vitest conformance + flip suite + manual | low | M | done — PR #12 |
+| X4 | README + docs/design.md (design rationale per assignment) | `README.md`, `docs/design.md` | README covers overview/live URL/dev setup and links design.md; design.md covers theme choice, non-obvious ideas, tradeoffs, extensions, time spent | author-facing docs (§4 exception) | low | S | done — PR #13 |
 
 ## Deliverable slices
 
