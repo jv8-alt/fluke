@@ -57,10 +57,13 @@ const STEPS: { t: string; p: string; s: Toggles }[] = [
 ];
 
 /**
- * Tour-completion memory: a returning visitor who has already watched the
- * whole story lands in explore mode instead of step 1. A cookie (not app
- * state) so it survives across visits; guarded so server-side test renders
- * (no `document`) behave as a first visit.
+ * First-visit memory: the guided tour auto-plays only the very first time
+ * someone lands on the page. Any later visit — whether they finished the
+ * tour, skipped it, or just closed the tab mid-step — opens straight into
+ * explore mode; "Restart tour" and the "Guided demo" picker entry are always
+ * there to bring it back on purpose. A cookie (not app state) so it survives
+ * across visits; guarded so server-side test renders (no `document`) behave
+ * as a first visit.
  */
 /**
  * Every new dataset starts with the corrections off, so the naive scoreboard
@@ -70,11 +73,11 @@ const STEPS: { t: string; p: string; s: Toggles }[] = [
  */
 const NO_CORRECTIONS: Toggles = { bars: false, clust: false, pair: false };
 
-const TOUR_COOKIE = "errorbars_tour_done";
-const tourCompleted = (): boolean =>
-  typeof document !== "undefined" && document.cookie.includes(`${TOUR_COOKIE}=1`);
-const rememberTourCompleted = () => {
-  document.cookie = `${TOUR_COOKIE}=1; max-age=31536000; path=/; SameSite=Lax`;
+const VISITED_COOKIE = "errorbars_visited";
+const hasVisitedBefore = (): boolean =>
+  typeof document !== "undefined" && document.cookie.includes(`${VISITED_COOKIE}=1`);
+const rememberVisited = () => {
+  document.cookie = `${VISITED_COOKIE}=1; max-age=31536000; path=/; SameSite=Lax`;
 };
 
 export function App() {
@@ -82,14 +85,18 @@ export function App() {
   const [dataset, setDataset] = useState<EvalDataset>(paper);
   const [uploadText, setUploadText] = useState<string | null>(null);
   const [uploadSummary, setUploadSummary] = useState<string | null>(null);
-  // Returning tour-completers start free, with every correction already on
-  // (the "after" view they ended the tour with).
-  const [mode, setMode] = useState<"story" | "explore">(() =>
-    tourCompleted() ? "explore" : "story",
+  // Read (never write) during render — the actual "mark as visited" write
+  // happens in an effect below, after mount, so the initial render stays a
+  // pure function of existing state.
+  const returning = useMemo(hasVisitedBefore, []);
+  // Returning visitors start free, with every correction already on (the
+  // "after" view the tour ends on) rather than replaying the story.
+  const [mode, setMode] = useState<"story" | "explore">(
+    returning ? "explore" : "story",
   );
   const [step, setStep] = useState(0);
-  const [toggles, setToggles] = useState<Toggles>(() =>
-    tourCompleted() ? { bars: true, clust: true, pair: true } : STEPS[0].s,
+  const [toggles, setToggles] = useState<Toggles>(
+    returning ? { bars: true, clust: true, pair: true } : STEPS[0].s,
   );
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
@@ -131,6 +138,13 @@ export function App() {
     setToggles(NO_CORRECTIONS);
     toast(`Parsed: ${summary}`);
   };
+
+  // Mark this browser as having visited, so the tour won't auto-play again —
+  // regardless of whether this visit finishes it, skips it, or abandons it
+  // mid-step. Runs once, after the first render that already read `returning`.
+  useEffect(() => {
+    if (!returning) rememberVisited();
+  }, []);
 
   // Boot: restore a shared view from the URL fragment, if present.
   useEffect(() => {
@@ -193,8 +207,6 @@ export function App() {
     const next = step + d;
     setStep(next);
     setToggles(STEPS[next].s);
-    // Reaching the final step counts as having done the full tour.
-    if (next === STEPS.length - 1) rememberTourCompleted();
   };
   const explore = () => setMode("explore");
   const resumeTour = () => {
