@@ -20,6 +20,7 @@ import {
   fmt,
   gapSE,
   gapsHint,
+  marginSplit,
   modelSE,
   moe,
   verdict,
@@ -329,6 +330,14 @@ export function App() {
                     t={toggles}
                     models={[models[0], models[1]]}
                     hasClusters={s.nClusters !== null}
+                    /* one shared scale across the table, so the ghost bands
+                       of different benchmarks are visually comparable */
+                    scaleMax={Math.max(
+                      ...stats.flatMap((x) => [
+                        moe(modelSE(x, "A", toggles)),
+                        moe(modelSE(x, "B", toggles)),
+                      ]),
+                    )}
                   />
                 ))}
               </tbody>
@@ -465,22 +474,78 @@ function VerdictBadge({
   );
 }
 
+/**
+ * The margin bar drawn under each score: a faint ghost band at the model's
+ * full margin, and a solid core at the part of that margin which does NOT
+ * cancel against the other model.
+ *
+ * Reading it needs no caption. Under unpaired analysis the core fills the
+ * whole band — nothing cancels. Switch on question-by-question comparison
+ * and the core collapses to a sliver while the ghost stays put: the score
+ * is still that uncertain, but almost all of that uncertainty is shared with
+ * the other model and therefore says nothing about which one is ahead.
+ */
+function MarginBar({
+  total,
+  own,
+  scaleMax,
+  color,
+}: {
+  total: number;
+  own: number;
+  scaleMax: number;
+  color: string;
+}) {
+  const W = 58;
+  const H = 9;
+  const mid = H / 2;
+  const px = (m: number) => (scaleMax > 0 ? (m / scaleMax) * (W / 2) : 0);
+  const ghost = Math.max(px(total), 0.5);
+  const core = Math.max(px(own), 0.75);
+  return (
+    <svg class="mbar" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+      <rect
+        x={W / 2 - ghost}
+        y={mid - 2.5}
+        width={ghost * 2}
+        height={5}
+        rx={2.5}
+        fill={color}
+        opacity={0.17}
+      />
+      <rect
+        x={W / 2 - core}
+        y={mid - 2.5}
+        width={core * 2}
+        height={5}
+        rx={2.5}
+        fill={color}
+      />
+    </svg>
+  );
+}
+
 function ScoreRow({
   s,
   t,
   models,
   hasClusters,
+  scaleMax,
 }: {
   s: BenchmarkStats;
   t: Toggles;
   models: [string, string];
   hasClusters: boolean;
+  scaleMax: number;
 }) {
   const v = verdict(s, t);
+  const split = marginSplit(s, t);
   const cell = (which: "A" | "B", cls: string) => {
     const val = which === "A" ? s.meanA : s.meanB;
     const isWinner = !t.bars && (which === "A") === (s.gap > 0);
-    const margin = fmt(moe(modelSE(s, which, t)));
+    const total = moe(modelSE(s, which, t));
+    const own = moe(which === "A" ? split.ownA : split.ownB);
+    const margin = fmt(total);
     return (
       <td class={`num ${cls} ${isWinner ? "winner" : ""}`}>
         {fmt(val)}%
@@ -500,6 +565,12 @@ function ScoreRow({
             >
               ± {margin}
             </span>
+            <MarginBar
+              total={total}
+              own={own}
+              scaleMax={scaleMax}
+              color={which === "A" ? "var(--g)" : "var(--d)"}
+            />
           </>
         )}
       </td>
@@ -528,7 +599,25 @@ function ScoreRow({
       {cell("B", "mD")}
       <td>
         {t.bars ? (
-          <VerdictBadge v={v} s={s} models={models} />
+          <>
+            <VerdictBadge v={v} s={s} models={models} />
+            {/* the gap and its own margin sit next to the verdict, because
+                this — not either model's margin — is what the verdict reads */}
+            <div class="gapline">
+              gap {s.gap > 0 ? "+" : ""}
+              {fmt(s.gap)}{" "}
+              <span
+                key={`gl-${fmt(moe(gapSE(s, t)))}`}
+                class="pm reflash"
+                role="button"
+                tabIndex={0}
+                data-pop={t.pair ? "seP" : "seU"}
+                data-ev={s.name}
+              >
+                ± {fmt(moe(gapSE(s, t)))}
+              </span>
+            </div>
+          </>
         ) : (
           <span class={s.gap > 0 ? "mG" : "mD"} style={{ fontSize: "13px" }}>
             {s.gap > 0 ? models[0] : models[1]} by {fmt(Math.abs(s.gap))}
