@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Error Bars — clickable mockup</title>
+<style>
+  :root {
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#ffffff;
+    --g:#7c3aed; --d:#d97706; --sig-g:#ecfdf5; --sig-g-ink:#047857;
+    --sig-d:#fffbeb; --sig-d-ink:#b45309; --noise:#f1f5f9; --noise-ink:#64748b;
+    --accent:#4f46e5;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+         color:var(--ink); background:var(--bg); line-height:1.5; }
+  .wrap { max-width:820px; margin:0 auto; padding:28px 20px 60px; }
+  header { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  h1 { font-size:24px; margin:0; }
+  h1 .beta { font-size:10px; color:#fff; background:var(--accent); border-radius:4px; padding:2px 6px; vertical-align:middle; margin-left:8px; }
+  .tagline { color:var(--muted); font-size:14px; margin:4px 0 0; }
+  .hbtns { display:flex; gap:8px; }
+  button { font:inherit; cursor:pointer; }
+  .btn { border:1px solid var(--line); background:var(--card); border-radius:8px; padding:7px 12px; font-size:13px; }
+  .btn:hover { border-color:var(--accent); }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn.ghost { border:none; background:none; color:var(--muted); }
+
+  .story { margin-top:22px; background:linear-gradient(180deg,#eef2ff,#fff); border:1px solid #c7d2fe;
+           border-radius:12px; padding:18px 20px; }
+  .story h2 { margin:0 0 6px; font-size:20px; }
+  .story p { margin:0 0 14px; font-size:15px; max-width:60ch; }
+  .story .nav { display:flex; gap:8px; align-items:center; }
+  .dots { margin-left:auto; display:flex; gap:5px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#c7d2fe; }
+  .dot.on { background:var(--accent); }
+  .story.paused { background:var(--card); border-color:var(--line); padding:10px 18px; display:flex; align-items:center; gap:12px; }
+  .story.paused span { color:var(--muted); font-size:13.5px; }
+
+  .controls { margin:18px 0 6px; display:flex; gap:20px; flex-wrap:wrap; align-items:center; padding:0 4px; }
+  .controls label { display:flex; gap:7px; align-items:center; font-size:13.5px; user-select:none; cursor:pointer; color:var(--muted); }
+  .controls label.on { color:var(--ink); font-weight:600; }
+  .controls input { accent-color:var(--accent); width:15px; height:15px; }
+  .chip { margin-left:auto; font-size:12px; color:var(--muted); }
+
+  .claim { font-size:18px; margin:14px 4px 12px; max-width:56ch; }
+  .claim b { border-bottom:2px solid var(--accent); }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; font-size:14.5px; }
+  th, td { text-align:left; padding:12px 16px; border-top:1px solid var(--line); }
+  thead th { border-top:none; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  td.num { font-variant-numeric:tabular-nums; }
+  .pm { color:var(--muted); font-size:12.5px; cursor:pointer; border-bottom:1px dashed #b6c2d2; white-space:nowrap; }
+  .pm:hover { color:var(--accent); }
+  .winner { font-weight:700; }
+  .mG { color:var(--g); } .mD { color:var(--d); }
+
+  .badge { display:inline-block; font-size:11.5px; font-weight:600; border-radius:99px; padding:3px 10px; cursor:pointer; white-space:nowrap; }
+  .badge.sigG { background:var(--sig-g); color:var(--sig-g-ink); }
+  .badge.sigD { background:var(--sig-d); color:var(--sig-d-ink); }
+  .badge.noise { background:var(--noise); color:var(--noise-ink); }
+
+  section { margin-top:14px; }
+  details { background:var(--card); border:1px solid var(--line); border-radius:12px; }
+  details + details, section + section { margin-top:12px; }
+  summary { cursor:pointer; padding:13px 16px; font-weight:600; font-size:14px; list-style:none; display:flex; align-items:center; gap:8px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::before { content:"▸"; color:var(--muted); font-size:12px; transition:transform .15s; }
+  details[open] summary::before { transform:rotate(90deg); }
+  summary .hint { font-weight:400; color:var(--muted); font-size:12.5px; margin-left:auto; text-align:right; }
+  .body { padding:4px 16px 16px; border-top:1px solid var(--line); }
+  .body .sub { color:var(--muted); font-size:12.5px; margin:10px 2px; max-width:64ch; }
+
+  .cmprow { display:grid; grid-template-columns:100px 1fr auto; gap:12px; align-items:center; padding:10px 4px; border-top:1px solid var(--line); }
+  .cmprow:first-of-type { border-top:none; }
+  .cmprow .name { font-size:13.5px; font-weight:600; }
+  .cmprow .meta { font-size:12.5px; color:var(--muted); }
+
+  .drop { border:2px dashed #cbd5e1; border-radius:10px; padding:16px; text-align:center; color:var(--muted);
+          font-size:13.5px; margin-top:12px; cursor:pointer; }
+  .drop:hover { border-color:var(--accent); }
+  .drop code { background:var(--bg); padding:1px 5px; border-radius:4px; font-size:12px; }
+  .drop a { color:var(--accent); }
+
+  .dslist { display:flex; flex-direction:column; gap:8px; }
+  .dsopt { display:flex; align-items:center; gap:12px; text-align:left; width:100%; border:1px solid var(--line); background:var(--card);
+           border-radius:10px; padding:11px 14px; }
+  .dsopt:hover { border-color:var(--accent); }
+  .dsopt.active { border-color:var(--accent); background:#f5f3ff; }
+  .dsopt .t { font-size:13.5px; font-weight:600; }
+  .dsopt .d { font-size:12.5px; color:var(--muted); }
+  .dsopt .tag { margin-left:auto; font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:2px 9px; white-space:nowrap; }
+  .dsopt.active .tag { color:var(--accent); border-color:#c7d2fe; }
+
+  .urlrow { display:flex; gap:8px; margin-top:12px; }
+  .urlrow input { flex:1; font:inherit; font-size:13px; padding:8px 11px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); }
+  .urlrow input:focus { outline:none; border-color:var(--accent); }
+  .warn { color:#b45309; }
+
+  .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:14px 24px; font-size:13.5px; margin-top:10px; }
+  .pgrid label { display:block; }
+  .pgrid .val { float:right; font-variant-numeric:tabular-nums; color:var(--accent); font-weight:600; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .pout { grid-column:1/-1; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; font-size:14.5px; }
+  .pout b { font-size:18px; color:var(--accent); }
+  .fine { color:var(--muted); font-size:12px; }
+
+  .pop { position:absolute; z-index:10; max-width:340px; background:#1e293b; color:#e2e8f0; border-radius:10px;
+         padding:12px 14px; font-size:12.5px; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+  .pop .eq { font-family:Georgia,'Times New Roman',serif; font-style:italic; background:#0f172a; border-radius:6px;
+             padding:8px 10px; margin:8px 0 4px; font-size:12.5px; color:#cbd5e1; }
+  .pop .cite { color:#94a3b8; font-size:11px; margin-top:4px; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff;
+           border-radius:99px; padding:9px 18px; font-size:13px; opacity:0; transition:opacity .25s; pointer-events:none; }
+  .toast.show { opacity:1; }
+
+  footer { margin-top:40px; color:var(--muted); font-size:12px; border-top:1px solid var(--line); padding-top:14px; max-width:70ch; }
+  footer a { color:var(--accent); text-decoration:none; }
+  .fline { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .lnk { border:none; background:none; padding:0; color:var(--accent); font-size:12px; text-decoration:underline; }
+  .about { margin-top:10px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:4px 16px; }
+  .about p { margin:12px 0; }
+  .mocknote { color:#8a7a3a; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Error Bars <span class="beta">MOCKUP</span></h1>
+      <p class="tagline">A benchmark score is a poll, not a fact. See which wins survive the margin of error.</p>
+    </div>
+    <div class="hbtns">
+      <button class="btn" id="copylink">Copy link</button>
+      <button class="btn" id="restart">Restart tour</button>
+    </div>
+  </header>
+
+  <div id="storybox"></div>
+
+  <div class="controls">
+    <label id="l-bars"><input type="checkbox" id="t-bars"> Margins of error</label>
+    <label id="l-clust"><input type="checkbox" id="t-clust"> Count grouped questions once</label>
+    <label id="l-pair"><input type="checkbox" id="t-pair"> Compare question-by-question</label>
+    <span class="chip" id="dschip"></span>
+  </div>
+
+  <p class="claim" id="claim"></p>
+
+  <div class="card"><table id="score"><thead></thead><tbody></tbody></table></div>
+
+  <section id="cmpwrap" class="hidden">
+    <details id="cmpbox">
+      <summary>The gaps, up close <span class="hint" id="cmphint"></span></summary>
+      <div class="body">
+        <p class="sub">Each bar is the plausible range for the true gap between the models. If a bar touches the zero line, the “lead” could just be luck in which questions were asked.</p>
+        <div id="cmp"></div>
+      </div>
+    </details>
+  </section>
+
+  <section id="toolbelt" class="hidden">
+    <details id="uploadbox">
+      <summary>Use different data <span class="hint">try a real benchmark, or bring your own</span></summary>
+      <div class="body">
+        <p class="sub">Anything with per-question scores works. Two models answering the same questions unlocks the question-by-question comparison automatically.</p>
+        <div class="dslist" id="dslist"></div>
+
+        <div class="drop" id="dropzone">
+          <b>Drop a CSV here</b><br>
+          <span class="fine">one row per model &amp; question: <code>model, item_id, score</code> (+ optional <code>cluster_id, sample_k</code>)<br>
+          not sure of the format? <a href="#" id="dltemplate">download a blank template</a></span>
+        </div>
+
+        <div class="urlrow">
+          <input type="text" id="urlin" placeholder="…or paste a link to a CSV (HuggingFace, GitHub)">
+          <button class="btn" id="urlgo">Load</button>
+        </div>
+        <div class="sub" id="urlmsg"></div>
+      </div>
+    </details>
+
+    <details id="powerbox">
+      <summary>How big must an eval be? <span class="hint">find out before trusting a scoreboard</span></summary>
+      <div class="body">
+        <p class="sub">Every eval has a smallest gap it can reliably tell apart from luck. Set the gap you care about and see how many questions that takes.</p>
+        <div class="pgrid">
+          <label>Smallest gap that matters to you <span class="val" id="v-mde"></span>
+            <input type="range" id="p-mde" min="1" max="10" step="0.5" value="3"></label>
+          <label>Times each question is asked <span class="val" id="v-k"></span>
+            <input type="range" id="p-k" min="1" max="10" step="1" value="1"></label>
+          <label>Tolerance for false alarms <span class="val" id="v-a"></span>
+            <input type="range" id="p-a" min="0" max="2" step="1" value="1"></label>
+          <label>Chance of catching a real gap <span class="val" id="v-b"></span>
+            <input type="range" id="p-b" min="0" max="1" step="1" value="0"></label>
+          <label style="grid-column:1/-1"><input type="checkbox" id="p-ntp"> Grade by the model’s own answer probabilities <span class="pm" data-pop="ntp">what’s this?</span></label>
+          <div class="pout" id="pout"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <footer>
+    <div class="fline">
+      Based on Miller, <a href="https://arxiv.org/abs/2411.00640"><i>Adding Error Bars to Evals</i></a> (Anthropic, 2024).
+      <button class="lnk" id="aboutbtn">About, data &amp; credits</button>
+    </div>
+    <div class="about hidden" id="about">
+      <p><b>The method.</b> Everything here follows the paper above. Click any dashed value in the app to see the exact formula and the section it comes from. The guided demo reproduces the paper’s worked example number for number.</p>
+      <p><b>The data.</b> Real datasets are derived from the <a href="https://huggingface.co/datasets/open-llm-leaderboard-old/results">Open LLM Leaderboard archive</a> — scores and group labels only, no benchmark questions or answers. The conversion script is in the repo.</p>
+      <p><b>Prior art.</b> These statistics already exist as Python libraries: <a href="#">evalci</a>, <a href="#">evalstats</a>, Inspect AI’s <a href="#">stderr()</a>, and <a href="https://github.com/evaleval/every_eval_ever">Every Eval Ever</a>. What was missing was a version you don’t have to install.</p>
+      <p><b>One correction.</b> The paper’s Table 1 lists HumanEval/Dreadnought as 87.7%; we use 86.7%, which is what its own −3.1 difference implies and what its later tables use.</p>
+      <p class="mocknote"><b>Mockup only.</b> Paper numbers are real; DROP and MMLU figures are illustrative until the fetch script runs. Upload and link-loading are canned, and copy-link shows a toast instead of copying.</p>
+    </div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ----- data (paper numbers; first-model-positive convention) -----
+const DATASETS = {
+  paper: {
+    label: "demo data",
+    models: ["Galleon","Dreadnought"],
+    evals: [
+      { name:"MATH", nQ:5000, clusters:null, groupNote:null,
+        A:{mean:65.5, seN:0.7, seC:0.7}, B:{mean:63.0, seN:0.7, seC:0.7},
+        diff:+2.5, se:{uN:0.99, uC:0.99, pN:0.70, pC:0.70}, corr:0.50 },
+      { name:"HumanEval", nQ:164, clusters:null, groupNote:null,
+        A:{mean:83.6, seN:3.2, seC:3.2}, B:{mean:86.7, seN:3.0, seC:3.0},
+        diff:-3.1, se:{uN:4.39, uC:4.39, pN:2.10, pC:2.10}, corr:0.64 },
+      { name:"MGSM", nQ:2500, clusters:250, groupNote:"250 questions × 10 languages",
+        A:{mean:75.3, seN:0.9, seC:1.6}, B:{mean:78.0, seN:0.9, seC:1.5},
+        diff:-2.7, se:{uN:1.27, uC:2.19, pN:1.01, pC:1.70}, corr:0.37 }
+    ]
+  },
+  drop: {
+    label: "DROP — reading comprehension",
+    note: "Real per-question logs from the Open LLM Leaderboard archive. Questions grouped by the passage they’re about.",
+    models: ["Model A","Model B"],
+    evals: [
+      { name:"DROP", nQ:9536, clusters:588, groupNote:"588 passages, ~16 questions each",
+        A:{mean:68.4, seN:0.44, seC:1.34}, B:{mean:66.9, seN:0.45, seC:1.36},
+        diff:+1.5, se:{uN:0.63, uC:1.91, pN:0.35, pC:1.05}, corr:0.72 }
+    ]
+  },
+  mmlu: {
+    label: "MMLU — 57 school subjects",
+    note: "Real per-question logs. Questions grouped by subject, which is milder clustering than DROP’s passages.",
+    models: ["Model A","Model B"],
+    evals: [
+      { name:"MMLU", nQ:14042, clusters:57, groupNote:"57 subjects",
+        A:{mean:68.2, seN:0.39, seC:0.62}, B:{mean:65.4, seN:0.40, seC:0.63},
+        diff:+2.8, se:{uN:0.56, uC:0.88, pN:0.31, pC:0.52}, corr:0.61 }
+    ]
+  },
+  upload: {
+    label: "my-eval.csv",
+    note: "Your file, parsed in the browser. Nothing is uploaded anywhere.",
+    models: ["ckpt-1600","ckpt-1400"],
+    evals: [
+      { name:"my-eval", nQ:200, clusters:null, groupNote:null,
+        A:{mean:73.0, seN:3.1, seC:3.1}, B:{mean:71.5, seN:3.2, seC:3.2},
+        diff:+1.5, se:{uN:4.46, uC:4.46, pN:1.60, pC:1.60}, corr:0.87 }
+    ]
+  }
+};
+
+const PICKER = [
+  { id:"paper",  t:"Guided demo",     d:"Two models, three benchmarks — the tour’s example", tag:"built in" },
+  { id:"drop",   t:"DROP",            d:"Real logs · questions grouped by passage",          tag:"real data" },
+  { id:"mmlu",   t:"MMLU",            d:"Real logs · questions grouped by subject",          tag:"real data" }
+];
+
+const STEPS = [
+  { t:"The scoreboard",
+    p:"Two models, three benchmarks. Bold marks the higher score. <b>Dreadnought wins 2 of 3</b> — so it’s the better model, right?",
+    s:{bars:false, clust:false, pair:false} },
+  { t:"Every score comes with luck",
+    p:"A benchmark asks a <i>sample</i> of possible questions — like a poll samples voters. Turn on the margins of error and one “win” already wobbles: HumanEval has only 164 questions, far too few to trust a 3-point gap.",
+    s:{bars:true, clust:false, pair:false} },
+  { t:"Repeated questions count less",
+    p:"MGSM looks like 2,500 questions, but it’s really 250 questions translated into 10 languages — and the copies succeed or fail together. Count each group once and Dreadnought’s lead there stops looking real.",
+    s:{bars:true, clust:true, pair:false} },
+  { t:"Compare the same test, answer by answer",
+    p:"Both models took the <i>same</i> test, so grade them side by side, question by question. Luck about which questions were hard cancels out, the picture sharpens — and the verdict flips: <b>the only real win belongs to Galleon</b>.",
+    s:{bars:true, clust:true, pair:true} }
+];
+
+const state = { mode:"story", step:0, bars:false, clust:false, pair:false, ds:"paper" };
+
+// ----- helpers -----
+const $ = id => document.getElementById(id);
+const fmt = (x,d=1) => x.toFixed(d);
+const moe = se => 1.96*se;                                  // displayed “± …” = 95% margin
+function seOf(m, ev){ return state.clust ? ev[m].seC : ev[m].seN; }
+function diffSE(ev){ return ev.se[(state.pair?"p":"u") + (state.clust?"C":"N")]; }
+function verdict(ev){
+  if (!state.bars) return ev.diff > 0 ? "A" : "B";
+  const half = moe(diffSE(ev));
+  if (ev.diff - half > 0) return "sigA";
+  if (ev.diff + half < 0) return "sigB";
+  return "noise";
+}
+
+// ----- render -----
+function render(){
+  const ds = DATASETS[state.ds];
+  $("t-bars").checked = state.bars;  $("l-bars").classList.toggle("on", state.bars);
+  $("t-clust").checked = state.clust; $("l-clust").classList.toggle("on", state.clust);
+  $("t-pair").checked = state.pair;  $("l-pair").classList.toggle("on", state.pair);
+  $("dschip").textContent = state.ds==="paper" ? "" : "viewing: " + ds.label;
+  const exploring = state.mode !== "story";
+  $("toolbelt").classList.toggle("hidden", !exploring);
+  renderStory(); renderTable(ds); renderClaim(ds); renderCmp(ds); renderPicker();
+}
+
+function renderPicker(){
+  $("dslist").innerHTML = PICKER.map(o => `
+    <button class="dsopt ${state.ds===o.id?'active':''}" onclick="pick('${o.id}')">
+      <div><div class="t">${o.t}</div><div class="d">${o.d}</div></div>
+      <span class="tag">${o.tag}</span>
+    </button>`).join("")
+    + (state.ds==="upload" ? `<button class="dsopt active"><div><div class="t">my-eval.csv</div>
+        <div class="d">your file · 200 questions · 2 models</div></div><span class="tag">loaded</span></button>` : "");
+}
+function pick(id){
+  state.ds = id; state.mode = "explore";
+  if (id !== "paper"){ state.bars = true; state.clust = !!DATASETS[id].evals[0].clusters; state.pair = false; }
+  $("urlmsg").textContent = "";
+  render();
+}
+
+function renderStory(){
+  const box = $("storybox");
+  if (state.ds !== "paper"){
+    box.innerHTML = `<div class="story paused"><span>${DATASETS[state.ds].note}</span>
+      <button class="btn" onclick="pick('paper')">Back to demo</button></div>`;
+    return;
+  }
+  if (state.mode !== "story"){
+    box.innerHTML = `<div class="story paused"><span>You’re exploring freely — click any dashed value to see why it is what it is.</span>
+      <button class="btn" onclick="resumeTour()">Resume tour</button></div>`;
+    return;
+  }
+  const st = STEPS[state.step];
+  box.innerHTML = `<div class="story">
+    <h2>${st.t}</h2><p>${st.p}</p>
+    <div class="nav">
+      ${state.step>0 ? '<button class="btn" onclick="go(-1)">Back</button>' : ''}
+      ${state.step<3 ? '<button class="btn primary" onclick="go(1)">Next</button>'
+                     : '<button class="btn primary" onclick="explore()">Explore on your own →</button>'}
+      <button class="btn ghost" onclick="explore()">Skip tour</button>
+      <div class="dots">${STEPS.map((_,i)=>`<span class="dot ${i===state.step?'on':''}"></span>`).join("")}</div>
+    </div></div>`;
+}
+
+function renderTable(ds){
+  const [A,B] = ds.models;
+  $("score").querySelector("thead").innerHTML =
+    `<tr><th>Benchmark</th><th>Questions</th><th class="mG">${A}</th><th class="mD">${B}</th><th>Verdict</th></tr>`;
+  $("score").querySelector("tbody").innerHTML = ds.evals.map(ev => {
+    const v = verdict(ev);
+    const cell = (m, cls) => {
+      const win = state.bars ? "" : ((m==="A") === (ev.diff>0) ? "winner" : "");
+      const pm = state.bars
+        ? ` <span class="pm" data-pop="${state.clust && ev.clusters ? 'moeC':'moe'}" data-ev="${ev.name}" data-m="${m}">± ${fmt(moe(seOf(m,ev)))}</span>` : "";
+      return `<td class="num ${cls} ${win}">${fmt(ev[m].mean)}%${pm}</td>`;
+    };
+    const nQ = (state.clust && ev.clusters)
+      ? `<span class="pm" data-pop="clusters" data-ev="${ev.name}">${ev.clusters.toLocaleString()} groups</span>`
+      : ev.nQ.toLocaleString();
+    const vcell = state.bars ? badge(v, ev, ds)
+      : `<span class="${ev.diff>0?'mG':'mD'}" style="font-size:13px">${ev.diff>0?A:B} by ${fmt(Math.abs(ev.diff))}</span>`;
+    return `<tr><td>${ev.name}</td><td class="num">${nQ}</td>${cell("A","mG")}${cell("B","mD")}<td>${vcell}</td></tr>`;
+  }).join("");
+}
+
+function badge(v, ev, ds){
+  if (v==="sigA") return `<span class="badge sigG" data-pop="verdict" data-ev="${ev.name}">${ds.models[0]} leads — real ✓</span>`;
+  if (v==="sigB") return `<span class="badge sigD" data-pop="verdict" data-ev="${ev.name}">${ds.models[1]} leads — real ✓</span>`;
+  return `<span class="badge noise" data-pop="verdict" data-ev="${ev.name}">too close to call</span>`;
+}
+
+function renderClaim(ds){
+  const [A,B] = ds.models;
+  let html;
+  if (!state.bars){
+    const bWins = ds.evals.filter(e=>e.diff<0).length;
+    const winner = bWins > ds.evals.length/2 ? B : A;
+    html = `Scoreboard says: <b>${winner} wins ${Math.max(bWins, ds.evals.length-bWins)} of ${ds.evals.length}</b>.`;
+  } else {
+    const sigA = ds.evals.filter(e=>verdict(e)==="sigA"), sigB = ds.evals.filter(e=>verdict(e)==="sigB");
+    if (!sigA.length && !sigB.length)
+      html = `Right now: <b>no lead is large enough to trust</b> — every gap could be luck.`;
+    else if (sigA.length && sigB.length)
+      html = `Right now: a <b>split decision</b> — ${A} really leads on ${sigA.map(e=>e.name).join(", ")}, ${B} on ${sigB.map(e=>e.name).join(", ")}.`;
+    else {
+      const win = sigA.length ? A : B, evs = (sigA.length?sigA:sigB).map(e=>e.name).join(", ");
+      html = `Right now: <b>one real lead — ${win} on ${evs}</b>. The rest could be luck.`;
+    }
+  }
+  $("claim").innerHTML = html;
+}
+
+function renderCmp(ds){
+  const wrap = $("cmpwrap");
+  if (!state.bars){ wrap.classList.add("hidden"); return; }
+  wrap.classList.remove("hidden");
+  $("cmphint").textContent = state.pair ? "comparing question-by-question" : "comparing overall scores";
+  $("cmp").innerHTML = ds.evals.map(ev => {
+    const se = diffSE(ev), half = moe(se), v = verdict(ev);
+    return `<div class="cmprow">
+      <div><div class="name">${ev.name}</div>
+        <div class="meta">${ev.diff>0?'+':''}${fmt(ev.diff)} <span class="pm" data-pop="${state.pair?'seP':'seU'}" data-ev="${ev.name}">± ${fmt(half)}</span></div></div>
+      ${ciSvg(ev.diff, half, v)}
+      <div>${badge(v, ev, ds)}</div></div>`;
+  }).join("");
+}
+
+function ciSvg(diff, half, v){
+  const W=300, H=44, mid=W/2, sc=12;
+  const x = d => mid + Math.max(-11.5, Math.min(11.5, d))*sc;
+  const col = v==="sigA" ? "var(--g)" : v==="sigB" ? "var(--d)" : "#94a3b8";
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <line x1="${mid}" y1="4" x2="${mid}" y2="${H-12}" stroke="#e2e8f0" stroke-width="1.5"/>
+    <text x="${mid}" y="${H-1}" font-size="9" fill="#94a3b8" text-anchor="middle">0</text>
+    <line x1="${x(diff-half)}" y1="${H/2-6}" x2="${x(diff+half)}" y2="${H/2-6}" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="${x(diff-half)}" y1="${H/2-12}" x2="${x(diff-half)}" y2="${H/2}" stroke="${col}" stroke-width="2"/>
+    <line x1="${x(diff+half)}" y1="${H/2-12}" x2="${x(diff+half)}" y2="${H/2}" stroke="${col}" stroke-width="2"/>
+    <circle cx="${x(diff)}" cy="${H/2-6}" r="4.5" fill="${col}"/>
+  </svg>`;
+}
+
+// ----- story / toggle actions -----
+function go(d){ state.step += d; applyStep(); render(); }
+function applyStep(){ const s = STEPS[state.step].s; Object.assign(state, {bars:s.bars, clust:s.clust, pair:s.pair}); }
+function explore(){ state.mode="explore"; render(); }
+function resumeTour(){ state.mode="story"; applyStep(); render(); }
+$("restart").onclick = () => { state.mode="story"; state.step=0; state.ds="paper";
+  $("urlmsg").textContent=""; applyStep(); render(); };
+
+["bars","clust","pair"].forEach(k => {
+  $("t-"+k).addEventListener("change", e => { state[k]=e.target.checked; if(state.mode==="story") state.mode="explore"; render(); });
+});
+
+// ----- upload: real app reads the dropped file; here clicking the zone simulates one -----
+$("dropzone").onclick = e => {
+  if (e.target.id === "dltemplate") return;
+  state.ds="upload"; state.mode="explore"; state.bars=true; state.pair=false; state.clust=false;
+  $("urlmsg").textContent = ""; render();
+  toast("Parsed 400 rows · 2 models · 200 shared questions — question-by-question comparison available");
+};
+$("dltemplate").onclick = e => { e.preventDefault(); toast("Downloads example.csv — headers plus a few filled rows"); };
+
+// ----- mock URL loader (shows the real CORS / format constraints) -----
+$("urlgo").onclick = () => {
+  const u = $("urlin").value.trim(), msg = $("urlmsg");
+  msg.className = "sub";
+  if (!u){ msg.textContent = "Paste a link to a CSV file."; return; }
+  if (/\.parquet(\?|$)/i.test(u)){
+    msg.className = "sub warn";
+    msg.textContent = "That’s a parquet file — this app reads CSV. Convert it first, or download and drop it above.";
+    return;
+  }
+  if (/huggingface\.co|raw\.githubusercontent\.com|github\.com/i.test(u)){
+    state.ds="upload"; state.mode="explore"; state.bars=true; state.pair=false; state.clust=false;
+    msg.textContent = "Loaded from link (mock). Links are shareable — anyone opening it sees this same view.";
+    render();
+    toast("Fetched and parsed 400 rows from link");
+    return;
+  }
+  msg.className = "sub warn";
+  msg.textContent = "That site doesn’t allow browsers to fetch its files directly. Download the file and drop it above — or use a HuggingFace or GitHub link.";
+};
+$("urlin").addEventListener("keydown", e => { if (e.key === "Enter") $("urlgo").click(); });
+
+// ----- power panel -----
+const ALPHAS=[0.01,0.05,0.10], POWERS=[0.80,0.90], Z={0.005:2.576,0.025:1.960,0.05:1.645,0.2:0.842,0.1:1.282};
+function powerCalc(){
+  const mde = +$("p-mde").value/100, K = +$("p-k").value,
+        a = ALPHAS[+$("p-a").value], pw = POWERS[+$("p-b").value],
+        ntp = $("p-ntp").checked;
+  const w2 = 1/9, s2 = ntp ? 0 : 1/6;
+  const za = Z[a/2], zb = Z[+(1-pw).toFixed(1)];
+  const n = Math.ceil((za+zb)**2 * (w2 + 2*s2/K) / mde**2);
+  $("v-mde").textContent = (mde*100).toFixed(1)+" pts";
+  $("v-k").textContent = K + "×";
+  $("v-a").textContent = Math.round(a*100)+"%";
+  $("v-b").textContent = Math.round(pw*100)+"%";
+  $("pout").innerHTML = `<b>≈ ${n.toLocaleString()}</b> questions needed to reliably spot a ${(mde*100).toFixed(1)}-point gap.<br>
+    <span class="fine">Anything smaller than that on a smaller eval is unreadable — win or lose. <span class="pm" data-pop="power">assumptions</span></span>`;
+}
+["p-mde","p-k","p-a","p-b","p-ntp"].forEach(id => $(id).addEventListener("input", powerCalc));
+
+// ----- popovers: plain language first, formula + citation underneath -----
+const POPS = {
+  moe: ev => ({t:`Margin of error — ${ev.name}`,
+    b:`This score is an average over ${ev.nQ.toLocaleString()} sampled questions. A different sample of questions would give a slightly different score; ± ${fmt(moe(ev.A.seN))} is the range that covers that luck 95 times out of 100.`,
+    eq:`SE = √( s̄(1−s̄) / n ) = ${fmt(ev.A.seN)} · margin = 1.96 × SE`, c:"Paper §2.1, Eq. 1–3"}),
+  moeC: ev => ({t:`Margin of error, groups counted once — ${ev.name}`,
+    b:`${ev.groupNote || "Related questions"} succeed or fail together, so they carry less independent information than their row count suggests. Counting each group once widens the honest margin from ± ${fmt(moe(ev.A.seN))} to ± ${fmt(moe(ev.A.seC))}.`,
+    eq:`SE²(grouped) = SE²(plain) + within-group covariance terms`, c:"Paper §2.2, Eq. 4"}),
+  seU: ev => ({t:`Gap margin (overall scores) — ${ev.name}`,
+    b:`Treats the two scores as unrelated measurements and adds their uncertainties. Valid — but wasteful when both models answered the very same questions.`,
+    eq:`SE(gap) = √( SE²A + SE²B )`, c:"Paper §4.1, Eq. 5"}),
+  seP: ev => ({t:`Gap margin (question-by-question) — ${ev.name}`,
+    b:`Score the gap per question, then average. Whatever made a question hard for both models cancels out, so the margin shrinks — for free. It works because the models agree on which questions are hard (agreement here: ${fmt(ev.corr,2)}).`,
+    eq:`SE(gap) = √( Var(sA − sB) / n )`, c:"Paper §4.2, Eq. 7–8"}),
+  verdict: ev => ({t:`Why this verdict — ${ev.name}`,
+    b:`The plausible range for the true gap is ${fmt(ev.diff-1.96*diffSE(ev))} to ${fmt(ev.diff+1.96*diffSE(ev))}. ${verdict(ev)==="noise" ? "That range includes zero — so the lead could be luck about which questions were asked." : "Zero isn’t in that range — the lead is bigger than question luck can explain."}`,
+    eq:`real ⇔ 95% range excludes 0`, c:"Paper §4, Eq. 3 & 5"}),
+  clusters: ev => ({t:`Question groups — ${ev.name}`,
+    b:`${ev.nQ.toLocaleString()} rows, but they come in ${ev.clusters.toLocaleString()} groups — ${ev.groupNote}. Questions in a group succeed or fail together, so groups, not rows, are the real unit of evidence.`,
+    eq:`n(effective) ≪ n(rows)`, c:"Paper §2.2"}),
+  ntp: () => ({t:`Grading by answer probabilities`,
+    b:`Instead of sampling an answer and grading it (which adds coin-flip luck), read how much probability the model itself puts on the right answer. Same question, zero answer luck. Only works when there’s no chain of thought. Lowering temperature is NOT a substitute — that changes the model being measured.`,
+    eq:`score = P(correct token) ⇒ answer-luck term σ² = 0`, c:"Paper §3.2–3.3"}),
+  power: () => ({t:`Assumptions behind this estimate`,
+    b:`Uses the paper’s illustrative variance numbers for a question-by-question comparison of two similar models. The real app estimates these from whatever dataset you have loaded.`,
+    eq:`n = (zα/2 + zβ)² (ω² + σ²A/K + σ²B/K) / δ²`, c:"Paper §5, Eq. 9–10"})
+};
+let popEl = null;
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-pop]");
+  if (popEl){ popEl.remove(); popEl=null; }
+  if (!t) return;
+  const ds = DATASETS[state.ds], ev = ds.evals.find(v=>v.name===t.dataset.ev) || ds.evals[0];
+  const p = POPS[t.dataset.pop](ev);
+  popEl = document.createElement("div");
+  popEl.className="pop";
+  popEl.innerHTML = `<b>${p.t}</b><div style="margin-top:6px">${p.b}</div><div class="eq">${p.eq}</div><div class="cite">${p.c} · arXiv:2411.00640</div>`;
+  document.body.appendChild(popEl);
+  const r = t.getBoundingClientRect();
+  popEl.style.left = Math.min(window.scrollX + r.left, window.scrollX + window.innerWidth - 360) + "px";
+  popEl.style.top = (window.scrollY + r.bottom + 8) + "px";
+  e.stopPropagation();
+});
+
+// ----- about -----
+$("aboutbtn").onclick = () => {
+  const a = $("about"), open = a.classList.toggle("hidden");
+  $("aboutbtn").textContent = open ? "About, data & credits" : "Hide";
+};
+
+// ----- copy link + toast -----
+$("copylink").onclick = () => toast(`Link copied (mock): #ds=${state.ds}&bars=${+state.bars}&clust=${+state.clust}&pair=${+state.pair}${state.mode==='story'?'&step='+(state.step+1):''}`);
+let toastTimer;
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"), 3400); }
+
+// ----- init -----
+applyStep(); render(); powerCalc();
+</script>
+</body>
+</html>
