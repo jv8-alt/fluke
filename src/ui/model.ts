@@ -151,6 +151,19 @@ export function claim(
   return `Right now: <b>one real lead — ${win} on ${evs}</b>. The rest could be luck.`;
 }
 
+/**
+ * Hint for the "gaps, up close" panel header: names every correction
+ * currently applied, so it's unambiguous that the bars show the COMBINED
+ * effect of all checked boxes, not just the most recent one. (The panel is
+ * only visible when margins are on, so that part is always listed.)
+ */
+export function gapsHint(t: Toggles, anyClusters: boolean): string {
+  const parts = ["margins of error"];
+  if (t.clust && anyClusters) parts.push("groups counted once");
+  parts.push(t.pair ? "question-by-question gaps" : "overall-score gaps");
+  return `combining: ${parts.join(" + ")}`;
+}
+
 /** Format helpers shared by the UI. */
 export const fmt = (x: number, d = 1) => x.toFixed(d);
 export const Z95_DISPLAY = 1.96;

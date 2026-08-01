@@ -112,6 +112,16 @@ footer a { color: var(--accent); text-decoration: none; }
 .about p { margin: 12px 0; }
 .about code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
 
+/* toggle feedback: elements keyed on their displayed value remount when a
+   correction changes them, replaying this highlight — visible feedback even
+   when the verdict itself doesn't move (common on real datasets) */
+@keyframes valflash {
+  from { background: #fde68a; }
+  to { background: transparent; }
+}
+.reflash { animation: valflash 0.9s ease-out; border-radius: 4px; }
+
 @media (prefers-reduced-motion: reduce) {
   summary::before { transition: none; }
+  .reflash { animation: none; }
 }

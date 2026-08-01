@@ -85,6 +85,7 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 | C2 | Share codec (#ds/toggles/step + compressed upload) | `src/data/share.ts` | Link round-trips full view state (+ uploaded data) in fresh tab | Vitest round-trip + manual | low | S | done — PR #7 |
 | D1 | DROP + MMLU per-question snapshots from HF archive | `datasets/`, `scripts/` | CSVs in repo with cluster labels + real model names; load in app | validated by C1 parser | **high** | M | done — [#8](https://github.com/jv8-alt/fluke/pull/8) (real data landed, no fallback; Llama-2-70b-hf vs falcon-40b) |
 | P1 | Power panel: MDE/K/α/power sliders + ntp toggle → questions-needed; dataset-estimated variances when available | `src/ui/PowerPanel.tsx` | Readout matches power fn; paper example (3pt, 80%, α=.05 → ≈969) reproduced with ntp on | Vitest on power fn, manual on UI | low | S | done — PR #4 |
+| X1 | Post-launch tweaks: tour-completion cookie, toggle change highlighting, gaps-panel combination hint | `src/ui/*` | Return visit after full tour lands in explore mode; changed values flash on toggle; gaps hint names all active corrections | Vitest on hint fn + manual | low | S | done — PR #10 |
 
 ## Deliverable slices
 
