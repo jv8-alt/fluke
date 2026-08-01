@@ -354,7 +354,12 @@ export function App() {
                     could just be luck in which questions were asked.
                   </p>
                   {stats.map((s) => (
-                    <GapRow s={s} t={toggles} models={[models[0], models[1]]} />
+                    <GapRow
+                      s={s}
+                      t={toggles}
+                      models={[models[0], models[1]]}
+                      hasClusters={s.nClusters !== null}
+                    />
                   ))}
                 </div>
               </details>
@@ -477,32 +482,17 @@ function ScoreRow({
   hasClusters: boolean;
 }) {
   const v = verdict(s, t);
+  // Scores are shown bare. Each model's own margin answers "how precisely do
+  // we know this model's absolute score?", which is NOT what the verdict
+  // reads — putting it beside the score invites comparing the two ranges by
+  // eye, the scoreboard-to-scoreboard reading the paper warns against (§5).
+  // The margin that governs the verdict is the gap's, shown with it below;
+  // per-model margins live one tier down, in the gaps panel.
   const cell = (which: "A" | "B", cls: string) => {
     const val = which === "A" ? s.meanA : s.meanB;
     const isWinner = !t.bars && (which === "A") === (s.gap > 0);
-    const margin = fmt(moe(modelSE(s, which, t)));
     return (
-      <td class={`num ${cls} ${isWinner ? "winner" : ""}`}>
-        {fmt(val)}%
-        {t.bars && (
-          <>
-            {" "}
-            {/* key = displayed value: when a toggle changes the margin, the
-                node remounts and the highlight animation replays, making the
-                change visible even when the verdict doesn't move */}
-            <span
-              key={`m-${which}-${margin}`}
-              class="pm reflash"
-              role="button"
-              tabIndex={0}
-              data-pop={t.clust && hasClusters ? "moeC" : "moe"}
-              data-ev={s.name}
-            >
-              ± {margin}
-            </span>
-          </>
-        )}
-      </td>
+      <td class={`num ${cls} ${isWinner ? "winner" : ""}`}>{fmt(val)}%</td>
     );
   };
   return (
@@ -528,7 +518,25 @@ function ScoreRow({
       {cell("B", "mD")}
       <td>
         {t.bars ? (
-          <VerdictBadge v={v} s={s} models={models} />
+          <>
+            <VerdictBadge v={v} s={s} models={models} />
+            {/* the gap and its margin sit with the verdict because this is
+                the evidence the verdict is actually read from */}
+            <div class="gapline">
+              gap {s.gap > 0 ? "+" : ""}
+              {fmt(s.gap)}{" "}
+              <span
+                key={`gl-${fmt(moe(gapSE(s, t)))}`}
+                class="pm reflash"
+                role="button"
+                tabIndex={0}
+                data-pop={t.pair ? "seP" : "seU"}
+                data-ev={s.name}
+              >
+                ± {fmt(moe(gapSE(s, t)))}
+              </span>
+            </div>
+          </>
         ) : (
           <span class={s.gap > 0 ? "mG" : "mD"} style={{ fontSize: "13px" }}>
             {s.gap > 0 ? models[0] : models[1]} by {fmt(Math.abs(s.gap))}
@@ -539,18 +547,49 @@ function ScoreRow({
   );
 }
 
-/** One row of the "gaps, up close" panel: number, interval SVG, verdict. */
+/**
+ * One row of the "gaps, up close" panel: the gap and its margin, the interval
+ * graphic, the verdict — plus each model's own margin on a second line.
+ *
+ * This is the only place per-model margins appear. They belong here rather
+ * than in the leaderboard for two reasons: the paper's first recommendation
+ * is to report a margin with every score, and "this score is only good to
+ * ±6" is the most vivid evidence of clustering; but read beside the gap they
+ * invite the overlapping-ranges fallacy, so they sit in the detail tier,
+ * explicitly labelled as standalone, where both magnitudes can be compared
+ * deliberately instead of accidentally.
+ */
 function GapRow({
   s,
   t,
   models,
+  hasClusters,
 }: {
   s: BenchmarkStats;
   t: Toggles;
   models: [string, string];
+  hasClusters: boolean;
 }) {
   const half = moe(gapSE(s, t));
   const v = verdict(s, t);
+  const popKind = t.clust && hasClusters ? "moeC" : "moe";
+  const own = (which: "A" | "B", cls: string) => (
+    <span class={cls}>
+      {which === "A" ? models[0] : models[1]}{" "}
+      {fmt(which === "A" ? s.meanA : s.meanB)}
+      {" "}
+      <span
+        key={`own-${which}-${fmt(moe(modelSE(s, which, t)))}`}
+        class="pm reflash"
+        role="button"
+        tabIndex={0}
+        data-pop={popKind}
+        data-ev={s.name}
+      >
+        ± {fmt(moe(modelSE(s, which, t)))}
+      </span>
+    </span>
+  );
   return (
     <div class="cmprow">
       <div>
@@ -575,6 +614,9 @@ function GapRow({
       <GapSvg diff={s.gap} half={half} v={v} />
       <div>
         <VerdictBadge v={v} s={s} models={models} />
+      </div>
+      <div class="alone">
+        each score on its own: {own("A", "mG")} · {own("B", "mD")}
       </div>
     </div>
   );

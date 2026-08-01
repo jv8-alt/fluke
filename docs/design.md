@@ -69,6 +69,27 @@ findings from wiring real archive logs in, all preserved deliberately:
    leaderboard. We kept it: "check the eval before trusting its scoreboard" is
    the paper's fifth recommendation, and here it is in the wild.
 
+**Designing away the overlapping-error-bars fallacy.** The most common
+misreading in the field is to put a margin on each model's score, see the two
+ranges overlap, and conclude there's no real difference. The close-race
+dataset is exactly that trap: vicuna at 55.7% and Llama-2-13b at 53.6% carry
+margins of ±5.9 and ±5.6 that overlap almost entirely, yet the 2.1-point gap
+between them is solid. Both facts are true — each model's *absolute* score
+really is that soft, because models are wildly uneven across subjects
+(28–85% here) so which subjects the benchmark covers swings the headline
+number; but that subject lottery lifts and drops both models together (their
+per-subject scores correlate at 0.97), so it cancels out of the difference.
+We first tried to *explain* the tension in place, annotating each score with
+how much of its swing cancels. It added noise and confused more than it
+taught. The fix that worked was structural: **the leaderboard shows bare
+scores and, beside the verdict, only the gap and the gap's margin** — the
+evidence the verdict is actually read from. Per-model margins move one tier
+down into the gaps panel, explicitly labelled "each score on its own", where
+the two magnitudes can be compared deliberately rather than collided with
+accidentally. This also puts the app in line with the paper's own fourth
+recommendation: the scoreboard-to-scoreboard comparison is the mistake, and a
+± hanging off each score is an invitation to make it.
+
 **One pipeline for all data.** Bundled snapshots, dropped CSVs, and
 URL-fetched CSVs all flow through the same parser into the same stats — so the
 demo is also a real tool: any eval with per-question scores gets the same
