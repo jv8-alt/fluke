@@ -350,10 +350,8 @@ export function App() {
                 <div class="body">
                   <p class="sub">
                     Each bar is the plausible range for the true gap between
-                    the models, under <b>all</b> the corrections you've
-                    switched on above — combined, not just the latest one. If
-                    a bar touches the zero line, the "lead" could just be luck
-                    in which questions were asked.
+                    the models. If a bar touches the zero line, the "lead"
+                    could just be luck in which questions were asked.
                   </p>
                   {stats.map((s) => (
                     <GapRow s={s} t={toggles} models={[models[0], models[1]]} />
