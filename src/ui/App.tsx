@@ -1,16 +1,19 @@
 /**
- * The app shell for the guided demo (Deliverable slice 1): a four-step story
- * that walks the paper's corrections over a live leaderboard, then frees the
- * user to flip the corrections themselves. Structure and copy follow the
- * approved mockup (mockup/index.html); every number is computed at load time
- * from the paper-mode dataset via src/stats — nothing on screen is hardcoded.
+ * The app shell: guided story (slice 1) + explore mode (slice 2 convergence).
  *
- * Slice 2 adds, at the convergence node: dataset picker, CSV upload, URL
- * loading, share links, the power panel, and the About section.
+ * Slice-2 wiring in this file: dataset picker + upload + URL loading (C1 via
+ * Toolbelt), share links (C2 codec on the Copy-link button and boot-time hash
+ * decode), real datasets (D1 via the bundled registry), the power panel (P1),
+ * and the About panel. Every number on screen is computed from the current
+ * dataset via src/stats — nothing is hardcoded.
  */
-import { useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import "./app.css";
 import { buildPaperDataset } from "../data/papermode";
+import { loadBundled } from "../data/bundled";
+import { parseCsv } from "../data/csv";
+import { decodeShare, shareableOrReason, type ShareState } from "../data/share";
+import type { EvalDataset } from "../data/types";
 import {
   claim,
   computeDatasetStats,
@@ -24,6 +27,9 @@ import {
   type Verdict,
 } from "./model";
 import { PopoverHost, popContent, type PopKind } from "./popover";
+import { PowerPanel } from "./PowerPanel";
+import { Toolbelt } from "./Toolbelt";
+import { AboutFooter } from "./About";
 
 /** The tour: each step flips on exactly one correction (one idea per step). */
 const STEPS: { t: string; p: string; s: Toggles }[] = [
@@ -50,18 +56,121 @@ const STEPS: { t: string; p: string; s: Toggles }[] = [
 ];
 
 export function App() {
-  // Dataset + derived stats are static for slice 1 (paper mode only).
-  const ds = useMemo(buildPaperDataset, []);
-  const stats = useMemo(() => computeDatasetStats(ds), [ds]);
-  const groupNotes = useMemo(() => {
-    const m = new Map<string, string | null>();
-    for (const b of ds.benchmarks) m.set(b.name, b.groupNote ?? null);
-    return m;
-  }, [ds]);
-
+  const paper = useMemo(buildPaperDataset, []);
+  const [dataset, setDataset] = useState<EvalDataset>(paper);
+  const [uploadText, setUploadText] = useState<string | null>(null);
+  const [uploadSummary, setUploadSummary] = useState<string | null>(null);
   const [mode, setMode] = useState<"story" | "explore">("story");
   const [step, setStep] = useState(0);
   const [toggles, setToggles] = useState<Toggles>(STEPS[0].s);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
+
+  const dsId = dataset.id;
+  const stats = useMemo(
+    () => (dataset.models.length >= 2 ? computeDatasetStats(dataset) : []),
+    [dataset],
+  );
+  const groupNotes = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const b of dataset.benchmarks) m.set(b.name, b.groupNote ?? null);
+    return m;
+  }, [dataset]);
+
+  const toast = (msg: string) => {
+    setToastMsg(msg);
+    window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToastMsg(null), 3400);
+  };
+
+  /** Toggle defaults when a dataset arrives outside the tour (mockup pick()). */
+  const togglesFor = (ds: EvalDataset): Toggles => ({
+    bars: true,
+    clust: ds.benchmarks.some((b) => b.clusterIds),
+    pair: false,
+  });
+
+  const pick = (id: string) => {
+    if (id === dsId) return;
+    setMode("explore");
+    loadBundled(id).then(
+      (ds) => {
+        setDataset(ds);
+        // Returning to the demo keeps all corrections on (the "after" view);
+        // arriving at a real dataset starts at margins-on, pairing off.
+        setToggles(
+          id === "paper" ? { bars: true, clust: true, pair: true } : togglesFor(ds),
+        );
+      },
+      (err: Error) => toast(`Couldn't load ${id}: ${err.message}`),
+    );
+  };
+
+  const onParsed = (ds: EvalDataset, csvText: string, summary: string) => {
+    setDataset(ds);
+    setUploadText(csvText);
+    setUploadSummary(summary);
+    setMode("explore");
+    setToggles(togglesFor(ds));
+    toast(`Parsed: ${summary}`);
+  };
+
+  // Boot: restore a shared view from the URL fragment, if present.
+  useEffect(() => {
+    const s = decodeShare(location.hash);
+    if (!s) return;
+    const t = { bars: s.bars, clust: s.clust, pair: s.pair };
+    if (s.ds === "upload" && s.csv) {
+      const res = parseCsv(s.csv);
+      if (res.ok) {
+        setDataset({ ...res.dataset, label: "shared upload" });
+        setUploadText(s.csv);
+        setUploadSummary("restored from a shared link");
+        setMode("explore");
+        setToggles(t);
+      }
+      return;
+    }
+    if (s.ds !== "paper") {
+      loadBundled(s.ds).then(
+        (ds) => {
+          setDataset(ds);
+          setMode("explore");
+          setToggles(t);
+        },
+        () => {
+          /* unknown/failed id → stay on the default view */
+        },
+      );
+      return;
+    }
+    if (s.step !== undefined && s.step >= 1 && s.step <= STEPS.length) {
+      setStep(s.step - 1);
+      setToggles(STEPS[s.step - 1].s);
+    } else {
+      setMode("explore");
+      setToggles(t);
+    }
+  }, []);
+
+  const copyLink = () => {
+    const state: ShareState = {
+      ds: dsId,
+      ...toggles,
+      step: mode === "story" && dsId === "paper" ? step + 1 : undefined,
+      csv: dsId === "upload" ? (uploadText ?? undefined) : undefined,
+    };
+    const res = shareableOrReason(state);
+    if (!res.ok) {
+      toast(res.reason);
+      return;
+    }
+    const url = `${location.origin}${location.pathname}#${res.fragment}`;
+    navigator.clipboard.writeText(url).then(
+      () => toast("Link copied"),
+      () => toast("Couldn't access the clipboard — copy the address bar after the page updates"),
+    );
+  };
 
   const go = (d: number) => {
     const next = step + d;
@@ -77,13 +186,15 @@ export function App() {
     setMode("story");
     setStep(0);
     setToggles(STEPS[0].s);
+    if (dsId !== "paper") setDataset(paper);
   };
   const flip = (k: keyof Toggles) => {
     setToggles({ ...toggles, [k]: !toggles[k] });
     if (mode === "story") setMode("explore");
   };
 
-  const [A, B] = ds.models;
+  const exploring = mode === "explore" || dsId !== "paper";
+  const models = dataset.models;
   const statFor = (name: string | undefined) =>
     stats.find((s) => s.name === name) ?? stats[0];
 
@@ -98,13 +209,23 @@ export function App() {
           </p>
         </div>
         <div class="hbtns">
+          <button class="btn" onClick={copyLink}>
+            Copy link
+          </button>
           <button class="btn" onClick={restart}>
             Restart tour
           </button>
         </div>
       </header>
 
-      {mode === "story" ? (
+      {dsId !== "paper" ? (
+        <div class="story paused">
+          <span>{dataset.note ?? `Viewing ${dataset.label}.`}</span>
+          <button class="btn" onClick={restart}>
+            Back to demo
+          </button>
+        </div>
+      ) : mode === "story" ? (
         <div class="story">
           <h2>{STEPS[step].t}</h2>
           {/* Step copy is trusted static text defined above, not user input. */}
@@ -148,94 +269,93 @@ export function App() {
 
       <div class="controls">
         <label class={toggles.bars ? "on" : ""}>
-          <input
-            type="checkbox"
-            checked={toggles.bars}
-            onChange={() => flip("bars")}
-          />{" "}
+          <input type="checkbox" checked={toggles.bars} onChange={() => flip("bars")} />{" "}
           Margins of error
         </label>
         <label class={toggles.clust ? "on" : ""}>
-          <input
-            type="checkbox"
-            checked={toggles.clust}
-            onChange={() => flip("clust")}
-          />{" "}
+          <input type="checkbox" checked={toggles.clust} onChange={() => flip("clust")} />{" "}
           Count grouped questions once
         </label>
         <label class={toggles.pair ? "on" : ""}>
-          <input
-            type="checkbox"
-            checked={toggles.pair}
-            onChange={() => flip("pair")}
-          />{" "}
+          <input type="checkbox" checked={toggles.pair} onChange={() => flip("pair")} />{" "}
           Compare question-by-question
         </label>
+        {dsId !== "paper" && <span class="chip">viewing: {dataset.label}</span>}
       </div>
 
-      <p
-        class="claim"
-        dangerouslySetInnerHTML={{ __html: claim(stats, ds.models, toggles) }}
-      />
+      {models.length >= 2 ? (
+        <>
+          <p
+            class="claim"
+            dangerouslySetInnerHTML={{ __html: claim(stats, models, toggles) }}
+          />
+          <div class="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Benchmark</th>
+                  <th>Questions</th>
+                  <th class="mG">{models[0]}</th>
+                  <th class="mD">{models[1]}</th>
+                  <th>Verdict</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.map((s) => (
+                  <ScoreRow
+                    s={s}
+                    t={toggles}
+                    models={[models[0], models[1]]}
+                    hasClusters={s.nClusters !== null}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      <div class="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Benchmark</th>
-              <th>Questions</th>
-              <th class="mG">{A}</th>
-              <th class="mD">{B}</th>
-              <th>Verdict</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.map((s) => (
-              <ScoreRow
-                s={s}
-                t={toggles}
-                models={[A, B]}
-                hasClusters={s.nClusters !== null}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+          {toggles.bars && (
+            <section>
+              <details open={exploring || step >= 3}>
+                <summary>
+                  The gaps, up close{" "}
+                  <span class="hint">
+                    {toggles.pair
+                      ? "comparing question-by-question"
+                      : "comparing overall scores"}
+                  </span>
+                </summary>
+                <div class="body">
+                  <p class="sub">
+                    Each bar is the plausible range for the true gap between
+                    the models. If a bar touches the zero line, the "lead"
+                    could just be luck in which questions were asked.
+                  </p>
+                  {stats.map((s) => (
+                    <GapRow s={s} t={toggles} models={[models[0], models[1]]} />
+                  ))}
+                </div>
+              </details>
+            </section>
+          )}
+        </>
+      ) : (
+        <SingleModelView dataset={dataset} />
+      )}
 
-      {toggles.bars && (
-        <section>
-          <details open={mode === "explore" || step >= 3}>
-            <summary>
-              The gaps, up close{" "}
-              <span class="hint">
-                {toggles.pair
-                  ? "comparing question-by-question"
-                  : "comparing overall scores"}
-              </span>
-            </summary>
-            <div class="body">
-              <p class="sub">
-                Each bar is the plausible range for the true gap between the
-                models. If a bar touches the zero line, the "lead" could just be
-                luck in which questions were asked.
-              </p>
-              {stats.map((s) => (
-                <GapRow s={s} t={toggles} models={[A, B]} />
-              ))}
-            </div>
-          </details>
+      {exploring && (
+        <section id="toolbelt">
+          <Toolbelt
+            currentId={dsId}
+            uploadLabel={dsId === "upload" ? dataset.label : null}
+            uploadSummary={uploadSummary}
+            onPick={pick}
+            onParsed={onParsed}
+          />
+          <PowerPanel />
         </section>
       )}
 
-      <footer>
-        <div class="fline">
-          Based on Miller,{" "}
-          <a href="https://arxiv.org/abs/2411.00640">
-            <i>Adding Error Bars to Evals</i>
-          </a>{" "}
-          (Anthropic, 2024). Click any dashed value for the formula behind it.
-        </div>
-      </footer>
+      <AboutFooter />
 
       <PopoverHost
         resolve={(kind, evName) =>
@@ -247,7 +367,48 @@ export function App() {
           )
         }
       />
+
+      <div class={`toast ${toastMsg ? "show" : ""}`} role="status">
+        {toastMsg}
+      </div>
     </div>
+  );
+}
+
+/** Margins-only table for single-model uploads (comparison needs two). */
+function SingleModelView({ dataset }: { dataset: EvalDataset }) {
+  const model = dataset.models[0];
+  return (
+    <>
+      <p class="claim">
+        Margins only — <b>add a second model</b> to unlock comparisons.
+      </p>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Benchmark</th>
+              <th>Questions</th>
+              <th class="mG">{model}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dataset.benchmarks.map((b) => {
+              const scores = b.scores[model];
+              const mean =
+                (scores.reduce((a, x) => a + x, 0) / scores.length) * 100;
+              return (
+                <tr>
+                  <td>{b.name}</td>
+                  <td class="num">{b.itemIds.length.toLocaleString()}</td>
+                  <td class="num mG">{fmt(mean)}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 

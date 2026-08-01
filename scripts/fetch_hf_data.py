@@ -65,7 +65,7 @@ MODELS = [
 ]
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT_DIR = os.path.join(REPO_ROOT, "datasets")
+OUT_DIR = os.path.join(REPO_ROOT, "public", "datasets")
 CACHE = os.environ.get("FLUKE_HF_CACHE") or os.path.join(
     tempfile.gettempdir(), "fluke-hf-cache")
 
