@@ -1,0 +1,58 @@
+/*
+ * PowerPanel-specific styles, ported from the approved mockup
+ * (mockup/index.html). Scope discipline: this file defines ONLY the four
+ * class names the power panel introduces (.pgrid / .val / .pout / .fine)
+ * plus its range inputs; the <details>/summary/.hint/.body/.sub shell and
+ * the .pm popover trigger are styled globally by the app stylesheet
+ * (B branch), so they are deliberately absent here.
+ *
+ * The mockup styled `input[type=range]` globally; here the rule is scoped
+ * under .pgrid so this panel can't restyle range inputs other components
+ * may add.
+ */
+
+/* Two-column control grid; the output box spans both columns. */
+.pgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+  font-size: 13.5px;
+  margin-top: 10px;
+}
+.pgrid label {
+  display: block;
+}
+
+/* Live value readout floated to the slider's right edge; tabular numerals
+ * keep "3.0 pts" from jittering horizontally as the value changes. */
+.pgrid .val {
+  float: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pgrid input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* The questions-needed readout — the panel's payoff line. */
+.pout {
+  grid-column: 1 / -1;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14.5px;
+}
+.pout b {
+  font-size: 18px;
+  color: var(--accent);
+}
+
+/* Fine print under the headline number (caveat + assumptions popover). */
+.fine {
+  color: var(--muted);
+  font-size: 12px;
+}

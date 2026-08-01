@@ -77,14 +77,14 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 |---|---|---|---|---|---|---|---|
 | S0 | Mockup + repo init | `mockup/`, `MIKADO.md` | Mockup approved by user; repo pushed | n/a (planning artifact) | low | — | done (direct to main, pre-PR) |
 | T1 | Scaffold + CI deploy to Pages | root config, workflow | Hello-world live on Pages URL | build passes in CI | low | S | done — PR #1 |
-| T2 | Stats core (mean, SE, clustered SE, unpaired/paired gap SE, correlation, power/MDE with K and ntp) | `src/stats/*` | All hand-computed cases pass | Vitest incl. paper worked examples (n≈969 power; K=2 → ⅓ variance cut) | low | M | pending |
-| A1 | Paper-mode dataset (seeded, calibrated) | `src/data/papermode.ts` | Means, naive+clustered SEs, all four gap-SE combos, and correlations match mockup's Table-1/5 values within ±0.15pp | Vitest tolerance test | med | M | pending |
+| T2 | Stats core (mean, SE, clustered SE, unpaired/paired gap SE, correlation, power/MDE with K and ntp) | `src/stats/*` | All hand-computed cases pass | Vitest incl. paper worked examples (n≈969 power; K=2 → ⅓ variance cut) | low | M | done — PR #2 |
+| A1 | Paper-mode dataset (deterministic MATH/HumanEval, seeded MGSM) | `src/data/papermode.ts`, `src/data/types.ts` | Means/gaps/paired SEs match Tables 1&5 (±0.15pp deterministic, ±0.3pp seeded); correlations ±0.08 (paper's fictional values not jointly achievable — documented); headline flip asserted | Vitest tolerance suite | med | M | done — PR #3 |
 | B1 | Story box + leaderboard table + toggles + claim + gaps panel + popovers (per mockup) | `src/ui/*` | 4-step flip narrative end-to-end; jargon-free defaults; every dashed value pops a formula + citation | Component smoke tests + manual click-through | med | L | pending |
 | B2 | Explore mode: dataset picker, dropzone + URL loader UI, share button, About panel; wires C2/D1/P1 | `src/ui/*` | All datasets browsable; upload + URL load work; share works in fresh tab | manual + smoke | low | M | pending |
 | C1 | Data layer: types, CSV parse/validate (item_id, cluster_id, sample_k averaging, benchmark), template download, URL fetch with CORS-friendly errors | `src/data/*` | Valid CSV renders; invalid CSV → specific friendly errors; URL fetch failure explains fix | Vitest parser + validation edge cases | low | M | pending |
 | C2 | Share codec (#ds/toggles/step + compressed upload) | `src/data/share.ts` | Link round-trips full view state (+ uploaded data) in fresh tab | Vitest round-trip + manual | low | S | pending |
 | D1 | DROP + MMLU per-question snapshots from HF archive | `datasets/`, `scripts/` | CSVs in repo with cluster labels + real model names; load in app | validated by C1 parser | **high** | M | done — [#8](https://github.com/jv8-alt/fluke/pull/8) (real data landed, no fallback; Llama-2-70b-hf vs falcon-40b) |
-| P1 | Power panel: MDE/K/α/power sliders + ntp toggle → questions-needed; dataset-estimated variances when available | `src/ui/PowerPanel.tsx` | Readout matches power fn; paper example (3pt, 80%, α=.05 → ≈969) reproduced with ntp on | Vitest on power fn, manual on UI | low | S | pending |
+| P1 | Power panel: MDE/K/α/power sliders + ntp toggle → questions-needed; dataset-estimated variances when available | `src/ui/PowerPanel.tsx` | Readout matches power fn; paper example (3pt, 80%, α=.05 → ≈969) reproduced with ntp on | Vitest on power fn, manual on UI | low | S | done — PR #4 |
 
 ## Deliverable slices
 
