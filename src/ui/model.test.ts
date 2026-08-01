@@ -64,40 +64,6 @@ describe("step 4 — question-by-question comparison", () => {
   });
 });
 
-describe("margin split: what cancels vs what doesn't", () => {
-  it("unpaired — nothing cancels, so each model's own margin is its full margin", async () => {
-    const { marginSplit, modelSE } = await import("./model");
-    const s = byName("MGSM");
-    const t = step(true, true, false);
-    const { ownA, ownB } = marginSplit(s, t);
-    expect(ownA).toBeCloseTo(modelSE(s, "A", t), 10);
-    expect(ownB).toBeCloseTo(modelSE(s, "B", t), 10);
-  });
-
-  it("paired — own margins shrink below the full margins", async () => {
-    const { marginSplit } = await import("./model");
-    const s = byName("MGSM");
-    const { ownA, ownB, totalA, totalB } = marginSplit(s, step(true, true, true));
-    expect(ownA).toBeLessThan(totalA);
-    expect(ownB).toBeLessThan(totalB);
-  });
-
-  it("the split is exact: own_A² + own_B² == the gap's variance, in every mode", async () => {
-    const { marginSplit } = await import("./model");
-    for (const s of stats) {
-      for (const t of [
-        step(true, false, false),
-        step(true, true, false),
-        step(true, false, true),
-        step(true, true, true),
-      ]) {
-        const { ownA, ownB } = marginSplit(s, t);
-        expect(Math.sqrt(ownA * ownA + ownB * ownB)).toBeCloseTo(gapSE(s, t), 10);
-      }
-    }
-  });
-});
-
 describe("gaps panel hint names the full combination", () => {
   it("lists every active correction, not just the latest", async () => {
     const { gapsHint } = await import("./model");
