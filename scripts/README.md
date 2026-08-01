@@ -1,6 +1,6 @@
 # Data snapshots — provenance & regeneration
 
-`datasets/mmlu.csv` and `datasets/drop.csv` are real per-question evaluation
+`public/datasets/mmlu.csv` and `public/datasets/drop.csv` (under `public/` so the static site serves them) are real per-question evaluation
 logs for **meta-llama/Llama-2-70b-hf** and **tiiuae/falcon-40b**, snapshotted
 from the Open LLM Leaderboard v1 archive on HuggingFace
 ([`open-llm-leaderboard-old/details_meta-llama__Llama-2-70b-hf`](https://huggingface.co/datasets/open-llm-leaderboard-old/details_meta-llama__Llama-2-70b-hf)

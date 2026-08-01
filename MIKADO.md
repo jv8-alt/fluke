@@ -42,7 +42,7 @@ src/
   stats/       # T2 trunk: pure functions, zero deps, fully unit-tested
   data/        # C branch: types.ts (DatasetSource), bundled.ts, papermode.ts (A1), csv.ts, share.ts
   ui/          # B branch: Story.tsx, Leaderboard.tsx, Toggles.tsx, GapsPanel.tsx, Popover.tsx, Toolbelt.tsx, PowerPanel.tsx (P), About.tsx
-datasets/*.csv           # snapshotted real data (D branch)
+public/datasets/*.csv    # snapshotted real data (D branch; under public/ so the static site serves them — moved in B2)
 scripts/fetch_hf_data.*  # one-time wrangling, committed for provenance
 mockup/index.html        # approved clickable mockup (planning artifact)
 .github/workflows/pages.yml
@@ -80,7 +80,7 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 | T2 | Stats core (mean, SE, clustered SE, unpaired/paired gap SE, correlation, power/MDE with K and ntp) | `src/stats/*` | All hand-computed cases pass | Vitest incl. paper worked examples (n≈969 power; K=2 → ⅓ variance cut) | low | M | done — PR #2 |
 | A1 | Paper-mode dataset (deterministic MATH/HumanEval, seeded MGSM) | `src/data/papermode.ts`, `src/data/types.ts` | Means/gaps/paired SEs match Tables 1&5 (±0.15pp deterministic, ±0.3pp seeded); correlations ±0.08 (paper's fictional values not jointly achievable — documented); headline flip asserted | Vitest tolerance suite | med | M | done — PR #3 |
 | B1 | Story box + leaderboard table + toggles + claim + gaps panel + popovers (per mockup) | `src/ui/*` | 4-step flip narrative end-to-end; jargon-free defaults; every dashed value pops a formula + citation | Component smoke tests + manual click-through | med | L | done — PR #5 |
-| B2 | Explore mode: dataset picker, dropzone + URL loader UI, share button, About panel; wires C2/D1/P1 | `src/ui/*` | All datasets browsable; upload + URL load work; share works in fresh tab | manual + smoke | low | M | pending |
+| B2 | Explore mode: dataset picker, dropzone + URL loader UI, share button, About panel; wires C2/D1/P1 | `src/ui/*`, `src/data/bundled.ts`, `public/datasets/` | All datasets browsable; upload + URL load work; share works in fresh tab | manual + smoke + D1↔C1 conformance tests | low | M | done — PR #9 |
 | C1 | Data layer: types, CSV parse/validate (item_id, cluster_id, sample_k averaging, benchmark), template download, URL fetch with CORS-friendly errors | `src/data/*` | Valid CSV renders; invalid CSV → specific friendly errors; URL fetch failure explains fix | Vitest parser + validation edge cases | low | M | done — PR #6 |
 | C2 | Share codec (#ds/toggles/step + compressed upload) | `src/data/share.ts` | Link round-trips full view state (+ uploaded data) in fresh tab | Vitest round-trip + manual | low | S | done — PR #7 |
 | D1 | DROP + MMLU per-question snapshots from HF archive | `datasets/`, `scripts/` | CSVs in repo with cluster labels + real model names; load in app | validated by C1 parser | **high** | M | done — [#8](https://github.com/jv8-alt/fluke/pull/8) (real data landed, no fallback; Llama-2-70b-hf vs falcon-40b) |

@@ -7,7 +7,15 @@
 import { useEffect, useState } from "preact/hooks";
 import { fmt, gapSE, moe, type BenchmarkStats, type Toggles } from "./model";
 
-export type PopKind = "moe" | "moeC" | "seU" | "seP" | "verdict" | "clusters";
+export type PopKind =
+  | "moe"
+  | "moeC"
+  | "seU"
+  | "seP"
+  | "verdict"
+  | "clusters"
+  | "ntp"
+  | "power";
 
 interface PopContent {
   title: string;
@@ -91,6 +99,29 @@ export function popContent(
           `together, so groups, not rows, are the real unit of evidence.`,
         eq: `n(effective) ≪ n(rows)`,
         cite: "Paper §2.2",
+      };
+    // The two power-panel drill-ins are dataset-independent (the P branch
+    // renders their triggers; the copy lives here with the other popovers).
+    case "ntp":
+      return {
+        title: `Grading by answer probabilities`,
+        body:
+          `Instead of sampling an answer and grading it (which adds coin-flip luck), read how ` +
+          `much probability the model itself puts on the right answer. Same question, zero ` +
+          `answer luck. Only works when there's no chain of thought. Lowering temperature is ` +
+          `NOT a substitute — that changes the model being measured.`,
+        eq: `score = P(correct token) ⇒ answer-luck term σ² = 0`,
+        cite: "Paper §3.2–3.3",
+      };
+    case "power":
+      return {
+        title: `Assumptions behind this estimate`,
+        body:
+          `Uses the paper's illustrative variance numbers for a question-by-question comparison ` +
+          `of two similar models. Estimating these terms from the dataset you have loaded needs ` +
+          `per-question repeats (the sample_k column) — a documented follow-up.`,
+        eq: `n = (zα/2 + zβ)² (ω² + σ²A/K + σ²B/K) / δ²`,
+        cite: "Paper §5, Eq. 9–10",
       };
   }
 }
