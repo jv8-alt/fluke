@@ -83,7 +83,7 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 | B2 | Explore mode: dataset picker, dropzone + URL loader UI, share button, About panel; wires C2/D1/P1 | `src/ui/*` | All datasets browsable; upload + URL load work; share works in fresh tab | manual + smoke | low | M | pending |
 | C1 | Data layer: types, CSV parse/validate (item_id, cluster_id, sample_k averaging, benchmark), template download, URL fetch with CORS-friendly errors | `src/data/*` | Valid CSV renders; invalid CSV → specific friendly errors; URL fetch failure explains fix | Vitest parser + validation edge cases | low | M | pending |
 | C2 | Share codec (#ds/toggles/step + compressed upload) | `src/data/share.ts` | Link round-trips full view state (+ uploaded data) in fresh tab | Vitest round-trip + manual | low | S | pending |
-| D1 | DROP + MMLU per-question snapshots from HF archive | `datasets/`, `scripts/` | CSVs in repo with cluster labels + real model names; load in app | validated by C1 parser | **high** | M | pending |
+| D1 | DROP + MMLU per-question snapshots from HF archive | `datasets/`, `scripts/` | CSVs in repo with cluster labels + real model names; load in app | validated by C1 parser | **high** | M | done — [#8](https://github.com/jv8-alt/fluke/pull/8) (real data landed, no fallback; Llama-2-70b-hf vs falcon-40b) |
 | P1 | Power panel: MDE/K/α/power sliders + ntp toggle → questions-needed; dataset-estimated variances when available | `src/ui/PowerPanel.tsx` | Readout matches power fn; paper example (3pt, 80%, α=.05 → ≈969) reproduced with ntp on | Vitest on power fn, manual on UI | low | S | pending |
 
 ## Deliverable slices
