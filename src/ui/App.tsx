@@ -62,6 +62,14 @@ const STEPS: { t: string; p: string; s: Toggles }[] = [
  * state) so it survives across visits; guarded so server-side test renders
  * (no `document`) behave as a first visit.
  */
+/**
+ * Every new dataset starts with the corrections off, so the naive scoreboard
+ * is always the first thing you see and you build the story up one checkbox
+ * at a time — the same arc the tour walks, on whatever data you brought.
+ * (Shared links are exempt: they carry their own toggle state.)
+ */
+const NO_CORRECTIONS: Toggles = { bars: false, clust: false, pair: false };
+
 const TOUR_COOKIE = "errorbars_tour_done";
 const tourCompleted = (): boolean =>
   typeof document !== "undefined" && document.cookie.includes(`${TOUR_COOKIE}=1`);
@@ -103,24 +111,13 @@ export function App() {
     toastTimer.current = window.setTimeout(() => setToastMsg(null), 3400);
   };
 
-  /** Toggle defaults when a dataset arrives outside the tour (mockup pick()). */
-  const togglesFor = (ds: EvalDataset): Toggles => ({
-    bars: true,
-    clust: ds.benchmarks.some((b) => b.clusterIds),
-    pair: false,
-  });
-
   const pick = (id: string) => {
     if (id === dsId) return;
     setMode("explore");
     loadBundled(id).then(
       (ds) => {
         setDataset(ds);
-        // Returning to the demo keeps all corrections on (the "after" view);
-        // arriving at a real dataset starts at margins-on, pairing off.
-        setToggles(
-          id === "paper" ? { bars: true, clust: true, pair: true } : togglesFor(ds),
-        );
+        setToggles(NO_CORRECTIONS);
       },
       (err: Error) => toast(`Couldn't load ${id}: ${err.message}`),
     );
@@ -131,7 +128,7 @@ export function App() {
     setUploadText(csvText);
     setUploadSummary(summary);
     setMode("explore");
-    setToggles(togglesFor(ds));
+    setToggles(NO_CORRECTIONS);
     toast(`Parsed: ${summary}`);
   };
 
