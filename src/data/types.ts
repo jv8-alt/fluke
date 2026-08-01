@@ -10,6 +10,8 @@ export interface BenchmarkData {
   itemIds: string[];
   /** cluster label per item (same passage / same problem across languages); absent = independent questions */
   clusterIds?: string[];
+  /** human-readable description of the grouping, e.g. "250 problems × 10 languages" */
+  groupNote?: string;
   /** model name → per-item scores in [0,1], aligned with itemIds */
   scores: Record<string, number[]>;
 }
