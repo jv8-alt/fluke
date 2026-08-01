@@ -26,14 +26,26 @@ export function sampleVariance(xs: readonly number[]): number {
 
 /**
  * Standard error of the mean via the Central Limit Theorem (paper Eq. 2):
- * SE = sqrt(Var(s) / n), treating the questions as an i.i.d. sample from an
- * idealized pool of all such questions.
+ * SE = sqrt(Var(s) / n).
+ *
+ * This is the whole "a benchmark score is a poll, not a fact" idea in one
+ * line: the questions asked are treated as an i.i.d. sample from an
+ * idealized pool of all such questions, so the observed mean is one draw of
+ * a random variable whose spread this function estimates. A different sample
+ * of questions would have produced a different score; SE quantifies by how
+ * much, and ±1.96·SE is the familiar 95% margin of error.
  */
 export function seMean(xs: readonly number[]): number {
   return Math.sqrt(sampleVariance(xs) / xs.length);
 }
 
-/** Bernoulli shortcut for binary scores (paper Eq. 3): sqrt(p(1−p)/n). */
+/**
+ * Bernoulli shortcut for binary scores (paper Eq. 3): sqrt(p(1−p)/n).
+ * For 0/1 scores the variance is fully determined by the mean, so the SE
+ * needs no second pass over the data. Also handy as a sanity ceiling: no
+ * [0,1]-valued score distribution with mean p can have variance above
+ * p(1−p), so no honest SE can exceed this one at the same n.
+ */
 export function seBernoulli(p: number, n: number): number {
   if (p < 0 || p > 1) throw new Error(`p out of [0,1]: ${p}`);
   if (n <= 0) throw new Error(`n must be positive: ${n}`);
