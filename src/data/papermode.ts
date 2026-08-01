@@ -137,6 +137,7 @@ function buildMgsm(): BenchmarkData {
     name: "MGSM",
     itemIds,
     clusterIds,
+    groupNote: "250 questions × 10 languages",
     scores: { [GALLEON]: a, [DREADNOUGHT]: b },
   };
 }
