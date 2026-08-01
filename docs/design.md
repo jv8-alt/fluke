@@ -69,25 +69,6 @@ findings from wiring real archive logs in, all preserved deliberately:
    leaderboard. We kept it: "check the eval before trusting its scoreboard" is
    the paper's fifth recommendation, and here it is in the wild.
 
-**Showing that overlapping error bars can still hide a real difference.** The
-close-race row is a live instance of the most common misreading in the whole
-field: vicuna's score is 55.7% ±5.9 and Llama-2-13b's is 53.6% ±5.6 — margins
-that overlap almost entirely — yet the verdict says the 2.1-point gap is
-real, and it is. Each model's score really is that soft, because models are
-wildly uneven across subjects (28–85% here) so *which* subjects the benchmark
-covers swings the headline number. But that subject lottery lifts and drops
-both models together (their per-subject scores correlate at 0.97), so it
-cancels out of the gap. Rather than explain this in a caption, the table
-encodes it: under each score is a bar whose faint band is the model's full
-margin and whose solid core is the part that does *not* cancel against the
-other model. The split is exact — the gap's variance is divided between the
-models in proportion to their own variances, so the two cores always compose
-to the gap's margin. That makes the unpaired case draw a full-width core
-(nothing cancels) and the paired case collapse it to a sliver, so ticking
-"compare question-by-question" *animates* the mechanism. The gap and its own
-margin also sit directly under the verdict badge, because that — not either
-model's margin — is what the verdict reads.
-
 **One pipeline for all data.** Bundled snapshots, dropped CSVs, and
 URL-fetched CSVs all flow through the same parser into the same stats — so the
 demo is also a real tool: any eval with per-question scores gets the same

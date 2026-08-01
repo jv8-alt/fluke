@@ -152,43 +152,6 @@ export function claim(
 }
 
 /**
- * Splits one model's margin into the part that CANCELS against the other
- * model and the part that doesn't.
- *
- * Why this exists: a model's own score can be very uncertain while the *gap*
- * between two models is nailed down — on real MMLU data each model's score
- * swings ±5.9 (models are uneven across subjects, so which subjects the
- * benchmark happens to cover matters a lot) while the gap between them holds
- * to ±0.7, because that subject lottery lifts and drops both models together.
- * Reading the two per-model margins as if they were independent is the
- * classic "overlapping error bars means no real difference" mistake.
- *
- * The split is exact rather than a gesture: the gap's variance is divided
- * between the two models in proportion to each one's own variance, so
- * own_A² + own_B² = Var(gap) always. Two consequences fall out for free:
- * - unpaired analysis (nothing cancels) → own == total, the full margin;
- * - paired analysis → own collapses to the residual that survives pairing.
- * So the same formula, evaluated under the current toggles, makes the
- * shrink visible the moment "compare question-by-question" is switched on.
- */
-export function marginSplit(
-  s: BenchmarkStats,
-  t: Toggles,
-): { ownA: number; ownB: number; totalA: number; totalB: number } {
-  const totalA = modelSE(s, "A", t);
-  const totalB = modelSE(s, "B", t);
-  const gap = gapSE(s, t);
-  const denom = totalA * totalA + totalB * totalB;
-  if (denom === 0) return { ownA: 0, ownB: 0, totalA, totalB };
-  return {
-    ownA: gap * Math.sqrt((totalA * totalA) / denom),
-    ownB: gap * Math.sqrt((totalB * totalB) / denom),
-    totalA,
-    totalB,
-  };
-}
-
-/**
  * Hint for the "gaps, up close" panel header: names every correction
  * currently applied, so it's unambiguous that the bars show the COMBINED
  * effect of all checked boxes, not just the most recent one. (The panel is
