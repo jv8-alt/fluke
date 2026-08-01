@@ -75,8 +75,8 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 
 | ID | Description | Files | Done when | Test plan | Risk | Est. | Status |
 |---|---|---|---|---|---|---|---|
-| S0 | Mockup + repo init | `mockup/`, `MIKADO.md` | Mockup approved by user; repo pushed | n/a (planning artifact) | low | — | in-progress |
-| T1 | Scaffold + CI deploy to Pages | root config, workflow | Hello-world live on Pages URL | build passes in CI | low | S | pending |
+| S0 | Mockup + repo init | `mockup/`, `MIKADO.md` | Mockup approved by user; repo pushed | n/a (planning artifact) | low | — | done (direct to main, pre-PR) |
+| T1 | Scaffold + CI deploy to Pages | root config, workflow | Hello-world live on Pages URL | build passes in CI | low | S | done — PR #1 |
 | T2 | Stats core (mean, SE, clustered SE, unpaired/paired gap SE, correlation, power/MDE with K and ntp) | `src/stats/*` | All hand-computed cases pass | Vitest incl. paper worked examples (n≈969 power; K=2 → ⅓ variance cut) | low | M | pending |
 | A1 | Paper-mode dataset (seeded, calibrated) | `src/data/papermode.ts` | Means, naive+clustered SEs, all four gap-SE combos, and correlations match mockup's Table-1/5 values within ±0.15pp | Vitest tolerance test | med | M | pending |
 | B1 | Story box + leaderboard table + toggles + claim + gaps panel + popovers (per mockup) | `src/ui/*` | 4-step flip narrative end-to-end; jargon-free defaults; every dashed value pops a formula + citation | Component smoke tests + manual click-through | med | L | pending |
