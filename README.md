@@ -30,11 +30,14 @@ every simplified claim has a click-through popover showing the exact formula
 and the paper section it implements.
 
 **Why this exists**: the statistics already ship in Python libraries
-(`evalci`, `evalstats`, Inspect AI's metrics). What was missing is the
-zero-install, visual, shareable version — the one you can hand to anyone who
-reads leaderboards. See [docs/design.md](docs/design.md) for the full design
-rationale: why this approach, what's non-obvious, key tradeoffs, and where
-it would go next.
+(`evalci`, `evalstats`, Inspect AI's metrics), and each will hand you a
+number. What was missing is somewhere to navigate them — to **learn** what
+the corrections do by watching a verdict flip, to **check** whether a
+published claim survives them, and to **plan** what your own eval would need
+to resolve the gap you care about. That's an interface problem, not a math
+problem. See [docs/design.md](docs/design.md) for the full design rationale:
+why this approach, what's non-obvious, key tradeoffs, and where it would go
+next.
 
 ## Development
 

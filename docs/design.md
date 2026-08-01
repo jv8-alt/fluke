@@ -18,11 +18,23 @@ anything. Miller's paper answers that question rigorously — but as a paper,
 full of estimator algebra, read mostly by people who already believed its
 conclusion. Meanwhile the machinery already exists as Python libraries
 (`evalci`, `evalstats`, Inspect AI's `stderr()`, Every Eval Ever). **The gap
-was never the statistics; it was the missing front-end.** So the approach is
-adoption, not invention: a zero-install page where the paper's corrections are
-three checkboxes over a live leaderboard, and the reviewer's own eyes watch a
-verdict flip. Prior art is cited in-app; our claim is the experience, not the
-math.
+was never the statistics; it was the missing front-end.** Those libraries
+compute a number and hand it back; what nobody had built was somewhere to
+*navigate* the ideas, and the same surface turns out to serve three different
+jobs:
+
+- **Learn** — see what each correction does by watching it change a verdict,
+  rather than reading its estimator.
+- **Check** — take a claim someone published and find out whether it survives
+  honest error bars, using the upload path or a shared link.
+- **Plan** — work out what your own eval would need before you run it: how
+  many questions to resolve the gap you care about, and whether repeats or
+  probability-grading buy you more than more questions.
+
+So the approach is adoption, not invention: a zero-install page where the
+paper's corrections are three checkboxes over a live leaderboard, and the
+reviewer's own eyes watch a verdict flip. Prior art is cited in-app; our claim
+is the experience, not the math.
 
 ## What makes it interesting / non-obvious
 

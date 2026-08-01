@@ -63,7 +63,13 @@ export function AboutFooter() {
             <a href="https://github.com/evaleval/every_eval_ever">
               Every Eval Ever
             </a>
-            . What was missing was a version you don't have to install.
+            . Each gives you a number back. What none of them gives you is
+            somewhere to navigate: a place to <b>learn</b> what the corrections
+            do by watching a verdict flip, to <b>check</b> whether a published
+            claim survives them, and to <b>plan</b> what your own eval would
+            need — how many more questions to resolve the gap you care about,
+            or whether that next checkpoint really moved. The gap was never
+            the math; it was the interface around it.
           </p>
         </div>
       )}
