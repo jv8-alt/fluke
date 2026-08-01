@@ -91,6 +91,7 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 | X4 | README + docs/design.md (design rationale per assignment) | `README.md`, `docs/design.md` | README covers overview/live URL/dev setup and links design.md; design.md covers theme choice, non-obvious ideas, tradeoffs, extensions, time spent | author-facing docs (§4 exception) | low | S | done — PR #13 |
 | X5 | ~~Split margin bars~~ — **reverted** (PR #15): annotating the score margins added noise and confused more than it explained | — | — | — | — | — | reverted; superseded by X6 |
 | X6 | Per-model ± out of the leaderboard: bare scores + gap ± beside the verdict; per-model margins move to the gaps panel as "each score on its own" | `src/ui/App.tsx`, `src/ui/app.css` | Leaderboard shows no per-model ±; verdict cell shows gap ±; gaps panel shows both, drill-ins intact; tour steps 2–4 still land | manual browser check of all 4 tour steps + both real datasets (§4: presentation-only; underlying values already unit-tested) | low | S | done — PR #16 |
+| X7 | Switching data source resets all corrections off, so every dataset starts at the naive scoreboard | `src/ui/App.tsx` | Picking any dataset (or uploading) leaves all three boxes unchecked; shared links still restore their own state | manual browser check across all four datasets + a shared link (§4: presentation-only) | low | S | done — PR #17 |
 
 ## Deliverable slices
 
