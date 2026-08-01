@@ -25,3 +25,12 @@ HuggingFace to drop DROP from the leaderboard in late 2023 — which we keep
 as-is because the per-passage clustering structure (the thing this demo
 analyzes) is genuine; the extracted means match the archive's own aggregate
 `results_*.json` to four decimal places.
+
+`public/datasets/mmlu-close.csv` is a second real MMLU pair chosen specifically
+because its verdict FLIPS as the app's corrections toggle: vicuna-13b-v1.5 vs
+its own base model Llama-2-13b-hf (gap ≈ 2.1pp over 14,015 shared items, 57
+subject clusters). Naive margins call the lead real; counting subjects as
+groups makes it unreadable; question-by-question pairing brings it back. Found
+by scanning candidate pairs with `python3 scripts/find_close_pair.py`; write
+the CSV with `python3 scripts/find_close_pair.py --write vicuna-13b-v1.5
+Llama-2-13b-hf`. Same archive, same scores-and-labels-only redistribution.

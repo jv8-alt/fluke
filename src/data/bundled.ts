@@ -45,6 +45,17 @@ export const BUNDLED: BundledEntry[] = [
     path: "datasets/mmlu.csv",
   },
   {
+    id: "mmlu-close",
+    title: "MMLU — close race",
+    desc: "Real logs · vicuna-13b-v1.5 vs its base Llama-2-13b · watch the verdict flip",
+    tag: "real data",
+    note:
+      "Real per-question logs for a fine-tune and its own base model, 2.1 points apart. " +
+      "Flip the corrections in order: the lead reads as real, dissolves when subjects are " +
+      "counted as groups, then comes back once the models are compared question-by-question.",
+    path: "datasets/mmlu-close.csv",
+  },
+  {
     id: "drop",
     title: "DROP",
     desc: "Real logs · questions grouped by passage — and a broken-eval story",
@@ -67,7 +78,7 @@ function dress(ds: EvalDataset, entry: BundledEntry): EvalDataset {
     if (!b.clusterIds) continue;
     const nClusters = new Set(b.clusterIds).size;
     b.groupNote =
-      entry.id === "mmlu"
+      entry.id.startsWith("mmlu")
         ? `${nClusters} school subjects`
         : `${nClusters} passages, ~${Math.round(b.itemIds.length / nClusters)} questions each`;
   }

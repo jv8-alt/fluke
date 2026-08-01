@@ -33,7 +33,9 @@ export function AboutFooter() {
             paper's fictional example (its per-question outcomes are
             constructed, since the paper publishes only summary statistics).
             MMLU and DROP are real per-question logs for{" "}
-            <code>Llama-2-70b-hf</code> and <code>falcon-40b</code> from the{" "}
+            <code>Llama-2-70b-hf</code> and <code>falcon-40b</code> (the close
+            race: <code>vicuna-13b-v1.5</code> vs <code>Llama-2-13b-hf</code>)
+            from the{" "}
             <a href="https://huggingface.co/open-llm-leaderboard-old">
               Open LLM Leaderboard archive
             </a>{" "}

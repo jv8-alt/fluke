@@ -86,6 +86,8 @@ One row per node; node PRs edit **only their own row** (flip status to `done` + 
 | D1 | DROP + MMLU per-question snapshots from HF archive | `datasets/`, `scripts/` | CSVs in repo with cluster labels + real model names; load in app | validated by C1 parser | **high** | M | done — [#8](https://github.com/jv8-alt/fluke/pull/8) (real data landed, no fallback; Llama-2-70b-hf vs falcon-40b) |
 | P1 | Power panel: MDE/K/α/power sliders + ntp toggle → questions-needed; dataset-estimated variances when available | `src/ui/PowerPanel.tsx` | Readout matches power fn; paper example (3pt, 80%, α=.05 → ≈969) reproduced with ntp on | Vitest on power fn, manual on UI | low | S | done — PR #4 |
 | X1 | Post-launch tweaks: tour-completion cookie, toggle change highlighting, gaps-panel combination hint | `src/ui/*` | Return visit after full tour lands in explore mode; changed values flash on toggle; gaps hint names all active corrections | Vitest on hint fn + manual | low | S | done — PR #10 |
+| X2 | Trim gaps-panel body text (hint carries the combining message) | `src/ui/App.tsx` | Sentence removed | copy-only (§4 exception) | low | S | done — PR #11 |
+| X3 | Real MMLU pair with verdict flips: vicuna-13b-v1.5 vs Llama-2-13b-hf, gap ≈2.1pp | `scripts/`, `public/datasets/mmlu-close.csv`, `src/data/bundled.*`, `src/ui/About.tsx` | Toggling uN→uC→pC on the bundled pair flips real→too close→real, asserted with ≥0.1pp boundary comfort | Vitest conformance + flip suite + manual | low | M | done — PR #12 |
 
 ## Deliverable slices
 
