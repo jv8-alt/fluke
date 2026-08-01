@@ -19,6 +19,7 @@ import {
   computeDatasetStats,
   fmt,
   gapSE,
+  gapsHint,
   modelSE,
   moe,
   verdict,
@@ -55,14 +56,33 @@ const STEPS: { t: string; p: string; s: Toggles }[] = [
   },
 ];
 
+/**
+ * Tour-completion memory: a returning visitor who has already watched the
+ * whole story lands in explore mode instead of step 1. A cookie (not app
+ * state) so it survives across visits; guarded so server-side test renders
+ * (no `document`) behave as a first visit.
+ */
+const TOUR_COOKIE = "errorbars_tour_done";
+const tourCompleted = (): boolean =>
+  typeof document !== "undefined" && document.cookie.includes(`${TOUR_COOKIE}=1`);
+const rememberTourCompleted = () => {
+  document.cookie = `${TOUR_COOKIE}=1; max-age=31536000; path=/; SameSite=Lax`;
+};
+
 export function App() {
   const paper = useMemo(buildPaperDataset, []);
   const [dataset, setDataset] = useState<EvalDataset>(paper);
   const [uploadText, setUploadText] = useState<string | null>(null);
   const [uploadSummary, setUploadSummary] = useState<string | null>(null);
-  const [mode, setMode] = useState<"story" | "explore">("story");
+  // Returning tour-completers start free, with every correction already on
+  // (the "after" view they ended the tour with).
+  const [mode, setMode] = useState<"story" | "explore">(() =>
+    tourCompleted() ? "explore" : "story",
+  );
   const [step, setStep] = useState(0);
-  const [toggles, setToggles] = useState<Toggles>(STEPS[0].s);
+  const [toggles, setToggles] = useState<Toggles>(() =>
+    tourCompleted() ? { bars: true, clust: true, pair: true } : STEPS[0].s,
+  );
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
 
@@ -176,6 +196,8 @@ export function App() {
     const next = step + d;
     setStep(next);
     setToggles(STEPS[next].s);
+    // Reaching the final step counts as having done the full tour.
+    if (next === STEPS.length - 1) rememberTourCompleted();
   };
   const explore = () => setMode("explore");
   const resumeTour = () => {
@@ -319,16 +341,19 @@ export function App() {
                 <summary>
                   The gaps, up close{" "}
                   <span class="hint">
-                    {toggles.pair
-                      ? "comparing question-by-question"
-                      : "comparing overall scores"}
+                    {gapsHint(
+                      toggles,
+                      stats.some((s) => s.nClusters !== null),
+                    )}
                   </span>
                 </summary>
                 <div class="body">
                   <p class="sub">
                     Each bar is the plausible range for the true gap between
-                    the models. If a bar touches the zero line, the "lead"
-                    could just be luck in which questions were asked.
+                    the models, under <b>all</b> the corrections you've
+                    switched on above — combined, not just the latest one. If
+                    a bar touches the zero line, the "lead" could just be luck
+                    in which questions were asked.
                   </p>
                   {stats.map((s) => (
                     <GapRow s={s} t={toggles} models={[models[0], models[1]]} />
@@ -421,20 +446,22 @@ function VerdictBadge({
   s: BenchmarkStats;
   models: [string, string];
 }) {
+  // key = verdict: a flipped verdict remounts the badge and replays the
+  // highlight, so the moment a margin crosses the gap is unmissable.
   if (v === "sigA")
     return (
-      <button class="badge sigG" data-pop="verdict" data-ev={s.name}>
+      <button key="sigA" class="badge sigG reflash" data-pop="verdict" data-ev={s.name}>
         {models[0]} leads — real ✓
       </button>
     );
   if (v === "sigB")
     return (
-      <button class="badge sigD" data-pop="verdict" data-ev={s.name}>
+      <button key="sigB" class="badge sigD reflash" data-pop="verdict" data-ev={s.name}>
         {models[1]} leads — real ✓
       </button>
     );
   return (
-    <button class="badge noise" data-pop="verdict" data-ev={s.name}>
+    <button key="noise" class="badge noise reflash" data-pop="verdict" data-ev={s.name}>
       too close to call
     </button>
   );
@@ -455,20 +482,25 @@ function ScoreRow({
   const cell = (which: "A" | "B", cls: string) => {
     const val = which === "A" ? s.meanA : s.meanB;
     const isWinner = !t.bars && (which === "A") === (s.gap > 0);
+    const margin = fmt(moe(modelSE(s, which, t)));
     return (
       <td class={`num ${cls} ${isWinner ? "winner" : ""}`}>
         {fmt(val)}%
         {t.bars && (
           <>
             {" "}
+            {/* key = displayed value: when a toggle changes the margin, the
+                node remounts and the highlight animation replays, making the
+                change visible even when the verdict doesn't move */}
             <span
-              class="pm"
+              key={`m-${which}-${margin}`}
+              class="pm reflash"
               role="button"
               tabIndex={0}
               data-pop={t.clust && hasClusters ? "moeC" : "moe"}
               data-ev={s.name}
             >
-              ± {fmt(moe(modelSE(s, which, t)))}
+              ± {margin}
             </span>
           </>
         )}
@@ -481,7 +513,8 @@ function ScoreRow({
       <td class="num">
         {t.clust && hasClusters ? (
           <span
-            class="pm"
+            key="groups"
+            class="pm reflash"
             role="button"
             tabIndex={0}
             data-pop="clusters"
@@ -527,8 +560,11 @@ function GapRow({
         <div class="meta">
           {s.gap > 0 ? "+" : ""}
           {fmt(s.gap)}{" "}
+          {/* keyed like the table margins: replays the highlight when a
+              toggle changes this gap's margin */}
           <span
-            class="pm"
+            key={`g-${fmt(half)}`}
+            class="pm reflash"
             role="button"
             tabIndex={0}
             data-pop={t.pair ? "seP" : "seU"}

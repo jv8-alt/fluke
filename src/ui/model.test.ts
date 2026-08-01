@@ -64,6 +64,25 @@ describe("step 4 — question-by-question comparison", () => {
   });
 });
 
+describe("gaps panel hint names the full combination", () => {
+  it("lists every active correction, not just the latest", async () => {
+    const { gapsHint } = await import("./model");
+    expect(gapsHint(step(true, false, false), true)).toBe(
+      "combining: margins of error + overall-score gaps",
+    );
+    expect(gapsHint(step(true, true, false), true)).toBe(
+      "combining: margins of error + groups counted once + overall-score gaps",
+    );
+    expect(gapsHint(step(true, true, true), true)).toBe(
+      "combining: margins of error + groups counted once + question-by-question gaps",
+    );
+    // clustering toggle is irrelevant when the dataset has no groups
+    expect(gapsHint(step(true, true, true), false)).toBe(
+      "combining: margins of error + question-by-question gaps",
+    );
+  });
+});
+
 describe("stats bundle sanity", () => {
   it("cluster-aware numbers equal naive ones when there are no clusters", () => {
     const m = byName("MATH");
