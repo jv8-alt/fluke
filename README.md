@@ -1,4 +1,4 @@
-# Error Bars — is that benchmark win real, or a fluke?
+# Fluke — is that benchmark win real, or a fluke?
 
 **Live demo: https://jv8-alt.github.io/fluke/**
 
