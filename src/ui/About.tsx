@@ -10,11 +10,15 @@ export function AboutFooter() {
   return (
     <footer>
       <div class="fline">
-        Based on Miller,{" "}
-        <a href="https://arxiv.org/abs/2411.00640">
-          <i>Adding Error Bars to Evals</i>
-        </a>{" "}
-        (Anthropic, 2024). Click any dashed value for the formula behind it.
+        {/* One inline span so the citation can't flex-wrap between the link and
+            the surrounding sentence — that was reading as a hard line break. */}
+        <span class="fcite">
+          Based on Miller,{" "}
+          <a href="https://arxiv.org/abs/2411.00640">
+            <i>Adding Error Bars to Evals</i>
+          </a>{" "}
+          (Anthropic, 2024). Click any dashed value for the formula behind it.
+        </span>
         <button class="lnk" onClick={() => setOpen(!open)}>
           {open ? "Hide" : "About, data & credits"}
         </button>
