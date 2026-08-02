@@ -105,8 +105,20 @@ summary .hint { font-weight: 400; color: var(--muted); font-size: 12.5px; margin
 .urlrow { display: flex; gap: 8px; margin-top: 12px; }
 .urlrow input { flex: 1; font: inherit; font-size: 13px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
 .urlrow input:focus { outline: none; border-color: var(--accent); }
-.urltip { margin-top: 6px; }
-.urltip .lnk { font-size: inherit; }
+/* the label is hidden but still occupies the button, so swapping in the
+   spinner cannot change the button's width or reflow the row */
+.urlload { position: relative; }
+.urlload .invisible { visibility: hidden; }
+.urlload[disabled] { cursor: default; }
+.spinner { position: absolute; top: 50%; left: 50%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px;
+           border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%;
+           animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.urltip { margin-top: 7px; padding-left: 2px; }
+/* inherit the tip's size and sit on its baseline — a button defaults to
+   neither, which is what left the link looking offset from the sentence */
+.urltip .lnk { font-size: inherit; line-height: inherit; vertical-align: baseline; }
 .warn { color: #b45309; }
 
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff;
@@ -133,4 +145,7 @@ footer a { color: var(--accent); text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   summary::before { transition: none; }
   .reflash { animation: none; }
+  /* still needs to read as "working" without spinning: pulse instead */
+  .spinner { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
 }

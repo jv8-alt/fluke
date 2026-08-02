@@ -214,6 +214,10 @@ audit every number; nobody else ever has to see a σ.
    replace the fictional example with a real pair once per-question data for a
    frontier-model comparison is publishable.
 
+### TODO
+- Error handling and other productionalization
+- UI/UX reflow for precedence (selected datasets on left/top, rather than selecting from below to apply above)
+
 ## Time spent
 
 Roughly **2 hours** for the core implementation (scaffold → deployed guided
