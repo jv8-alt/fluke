@@ -128,3 +128,11 @@ where that happens it is stated in the pull request rather than left implied.
 - **Accepting other file formats**: `parseCsv` is the single entry point for
   every source, so an adapter that produces an `EvalDataset` slots in beside
   it. See the input-flexibility roadmap in [design.md](design.md#where-to-go-from-here).
+
+## Implementation note
+
+I just recently started experimenting with using the [Mikado Method](https://mikadomethod.info) to structure agent execution. See the AGENTS-mikado-* docs in this repo for more, as well as the PRs produced accordingly, [starting here](https://github.com/jv8-alt/fluke/pulls?q=is%3Apr+is%3Aclosed+sort%3Acreated-asc).
+
+This was a helpful way to plan and observe progress, ensuring maximum safety and learnings, but it was also slow compared to other methods that let agents fully manage their own orchestration. I'll have to try it again with a larger team project and see if there is value to be had.
+
+Note also that my Claude Max promo code never worked, so I used my personal account (and upgraded it to 20x in the middle of the project).
