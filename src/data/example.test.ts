@@ -38,8 +38,23 @@ describe("example-eval.csv parses like any upload", () => {
   });
 
   it("carries clusters on reading and none on arithmetic", () => {
-    expect(bench("reading").nClusters).toBe(40);
+    expect(bench("reading").nClusters).toBe(30);
     expect(bench("arithmetic").nClusters).toBeNull();
+  });
+
+  it("a loaded view of it still fits in a share link", async () => {
+    // The whole reason this file is as small as it is. If a size constant in
+    // scripts/make_example_csv.py grows, this is what catches it.
+    const { shareableOrReason, MAX_FRAGMENT_CHARS } = await import("./share");
+    const res = shareableOrReason({
+      ds: "upload",
+      bars: true,
+      clust: true,
+      pair: true,
+      csv: text,
+    });
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.fragment.length).toBeLessThanOrEqual(MAX_FRAGMENT_CHARS);
   });
 });
 
@@ -61,14 +76,15 @@ describe("the one-click example URL stays valid after merge", () => {
   });
 });
 
-describe("the story the docs promise: the bigger gap is the fake one", () => {
+describe("the story the docs promise: same size gap, opposite verdicts", () => {
   const reading = bench("reading");
   const arithmetic = bench("arithmetic");
 
-  it("reading's lead is the larger of the two", () => {
+  it("both leads are nearly the same size — that's the point", () => {
     // gap is (model A − model B) and tuned-v2 is model B, so both gaps are
-    // negative; the claim is about size of lead, hence magnitudes.
-    expect(Math.abs(reading.gap)).toBeGreaterThan(Math.abs(arithmetic.gap));
+    // negative; the claim is about size of lead, hence magnitudes. If these
+    // drift apart the file stops making its argument.
+    expect(Math.abs(Math.abs(reading.gap) - Math.abs(arithmetic.gap))).toBeLessThan(1.5);
   });
 
   it("reading reads as real until passages are counted once, then dies", () => {

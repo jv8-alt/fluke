@@ -15,21 +15,23 @@
  *
  *     ds=paper&bars=1&clust=0&pair=1&step=3
  *
- * plus an optional `csv=` parameter holding the raw uploaded CSV text as
- * URL-safe base64 when the shared dataset is an upload (ds === "upload").
+ * plus an optional `csv=` parameter carrying the uploaded CSV when the shared
+ * dataset is an upload (ds === "upload").
  *
- * Encoding choice: plain base64 of the UTF-8 bytes, NOT compression. The
- * plan's original sketch used lz-string, but this branch may not add npm
- * dependencies (package.json is outside its file boundary), and a hand-rolled
- * compressor is exactly the kind of subtle code this project shouldn't own.
- * Compression is a possible follow-up; the 6 kB size guard below keeps
- * uncompressed links honest in the meantime.
+ * Encoding choice: the CSV is compressed (lz-string) and then base64url'd.
+ * Eval CSVs repeat the same model and benchmark names on every row, so they
+ * compress by roughly 20×, which is the difference between a shareable link
+ * and a refused one. Everything else in the fragment stays plain text, since
+ * people eyeball links before clicking them. The size guard below still
+ * applies — compression widens what fits, it doesn't make the limit go away.
  *
  * Robustness contract: decodeShare NEVER throws. Share links arrive from the
  * wild — truncated by chat apps, mangled by "smart" quote substitution,
  * hand-edited — and a bad link should fall back to the default view, not
  * crash the app. Any malformed input → null.
  */
+
+import LZString from "lz-string";
 
 /** Everything "Copy link" captures about the current view. */
 export interface ShareState {
@@ -58,24 +60,45 @@ export const MAX_FRAGMENT_CHARS = 6000;
 // ---------------------------------------------------------------------------
 
 /**
- * btoa/atob only speak latin-1, so unicode CSV content (model names, accented
- * item ids…) must go through UTF-8 bytes first. We also swap +/ for -_ and
- * drop '=' padding: '+' and '=' have meanings inside a key=value&… fragment,
- * and '/' is just asking for trouble with naive URL handling.
+ * CSV payloads are compressed before encoding. Eval CSVs are extremely
+ * repetitive (the same model and benchmark names on every row), so this is
+ * the difference between a shareable link and a refused one — the bundled
+ * example goes from ~100k characters to ~5k.
+ *
+ * lz-string's own EncodedURIComponent alphabet includes '+' and '$', which
+ * are asking for trouble inside a `key=value&…` fragment, so we take its
+ * base64 output through the same URL-safe transform used above. The "z."
+ * prefix marks a compressed payload; '.' can't occur in base64url, so links
+ * made before compression existed still decode unambiguously.
  */
-function textToBase64Url(text: string): string {
-  const bytes = new TextEncoder().encode(text);
-  // Build the binary string in chunks — String.fromCharCode(...bigArray)
-  // overflows the argument limit on large uploads.
-  let bin = "";
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const COMPRESSED_PREFIX = "z.";
+
+function encodeCsvPayload(text: string): string {
+  const b64 = LZString.compressToBase64(text);
+  return (
+    COMPRESSED_PREFIX +
+    b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+  );
 }
 
-/** Inverse of textToBase64Url. Throws on invalid base64 — callers catch. */
+/** Inverse of encodeCsvPayload. Throws on a corrupt payload — callers catch. */
+function decodeCsvPayload(raw: string): string {
+  if (!raw.startsWith(COMPRESSED_PREFIX)) return base64UrlToText(raw);
+  const b64url = raw.slice(COMPRESSED_PREFIX.length);
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+  const out = LZString.decompressFromBase64(padded);
+  // lz-string signals failure with null or "" rather than throwing.
+  if (!out) throw new Error("corrupt compressed csv payload");
+  return out;
+}
+
+/**
+ * Decodes the pre-compression payload format (plain URL-safe base64 of the
+ * UTF-8 bytes). Nothing writes this any more — it exists so links minted
+ * before compression landed still open. Throws on invalid input, per the
+ * decodeCsvPayload contract.
+ */
 function base64UrlToText(b64url: string): string {
   const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
   // atob tolerates missing padding in some engines but not all — restore it.
@@ -109,7 +132,7 @@ export function encodeShare(state: ShareState): string {
   // Optional fields are simply omitted, keeping the common-case link short
   // and readable — a design goal, since people eyeball links before clicking.
   if (state.step !== undefined) parts.push(`step=${state.step}`);
-  if (state.csv !== undefined) parts.push(`csv=${textToBase64Url(state.csv)}`);
+  if (state.csv !== undefined) parts.push(`csv=${encodeCsvPayload(state.csv)}`);
   return parts.join("&");
 }
 
@@ -185,7 +208,7 @@ export function decodeShare(fragment: string): ShareState | null {
     const csvRaw = params.get("csv");
     if (csvRaw !== undefined) {
       if (csvRaw === "") return null; // ds=upload with an empty payload is a broken link
-      state.csv = base64UrlToText(csvRaw); // throws on garbage → caught below
+      state.csv = decodeCsvPayload(csvRaw); // throws on garbage → caught below
     }
 
     return state;

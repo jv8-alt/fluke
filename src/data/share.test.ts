@@ -15,6 +15,21 @@ import {
   type ShareState,
 } from "./share";
 
+/**
+ * Deterministic high-entropy CSV. Payloads are compressed now, so a fixture
+ * built from repeated text no longer exercises the size guard at all — only
+ * content compression can't shrink still does. Seeded LCG rather than
+ * Math.random so a failure is always reproducible.
+ */
+function incompressibleCsv(rows: number): string {
+  let seed = 987654321;
+  const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const tok = () => Math.floor(rand() * 2176782336).toString(36);
+  const lines = ["model,item_id,score"];
+  for (let i = 0; i < rows; i++) lines.push(`${tok()},${tok()}-${tok()},${rand().toFixed(8)}`);
+  return lines.join("\n") + "\n";
+}
+
 describe("encodeShare / decodeShare — round trips", () => {
   it("round-trips the minimal common case and stays human-readable", () => {
     const state: ShareState = { ds: "paper", bars: true, clust: false, pair: true };
@@ -133,11 +148,22 @@ describe("shareableOrReason — size guard", () => {
     }
   });
 
-  it("refuses an oversized CSV with a reason naming the alternative", () => {
-    // ~9000 chars of CSV → >6000 char fragment even before base64 overhead.
-    const bigCsv =
-      "model,item_id,score\n" + Array.from({ length: 300 }, (_, i) => `some-model,question-${i},0.5`).join("\n");
-    const res = shareableOrReason({ ...base, csv: bigCsv });
+  it("compresses: a repetitive CSV far larger than the cap still fits", () => {
+    // 1000 rows ≈ 27k characters — comfortably over the limit uncompressed,
+    // but real eval CSVs repeat the same model and benchmark names on every
+    // row, which is exactly what compression eats. This is the behaviour that
+    // makes the bundled example shareable.
+    const repetitive =
+      "benchmark,model,item_id,score\n" +
+      Array.from({ length: 1000 }, (_, i) => `reading,baseline-v1,q${i},1`).join("\n");
+    expect(repetitive.length).toBeGreaterThan(4 * MAX_FRAGMENT_CHARS);
+    const res = shareableOrReason({ ...base, csv: repetitive });
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(decodeShare(res.fragment)!.csv).toBe(repetitive);
+  });
+
+  it("refuses a CSV that is oversized even compressed, naming the alternative", () => {
+    const res = shareableOrReason({ ...base, csv: incompressibleCsv(1200) });
     expect(res.ok).toBe(false);
     if (!res.ok) {
       expect(res.reason).toContain("too large to fit in a link");
@@ -146,7 +172,7 @@ describe("shareableOrReason — size guard", () => {
   });
 
   it("encodeShare itself still encodes oversized state (guard is opt-in)", () => {
-    const bigCsv = "x".repeat(3 * MAX_FRAGMENT_CHARS);
+    const bigCsv = incompressibleCsv(1200);
     const frag = encodeShare({ ...base, csv: bigCsv });
     expect(frag.length).toBeGreaterThan(MAX_FRAGMENT_CHARS);
     expect(decodeShare(frag)!.csv).toBe(bigCsv); // and it still round-trips
