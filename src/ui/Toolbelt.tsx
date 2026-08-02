@@ -60,8 +60,12 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
     return true;
   };
 
-  const handleFile = (f: File) =>
-    f.text().then((t) => handleText(t, f.name));
+  const handleFile = (f: File) => {
+    // Drop/browse supersedes any earlier URL attempt — leaving that message up
+    // would report on a file the user has moved on from.
+    setUrlMsg(null);
+    return f.text().then((t) => handleText(t, f.name));
+  };
 
   const downloadTemplate = (e: Event) => {
     e.preventDefault();
