@@ -234,7 +234,7 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
           </button>
         </div>
         <div class="fine urltip">
-          Nothing to hand?{" "}
+          Nothing on hand?{" "}
           <button class="lnk" onClick={loadExample}>
             try our example file
           </button>{" "}
