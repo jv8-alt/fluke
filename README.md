@@ -15,9 +15,13 @@ the paper's corrections, one checkbox at a time.
   DROP from the Open LLM Leaderboard archive — including a pair
   (`vicuna-13b-v1.5` vs its base `Llama-2-13b-hf`) whose verdict visibly
   flips *real → too close to call → real* as the corrections stack.
-- **Bring your own eval**: drop a CSV (or paste a HuggingFace/GitHub link) of
-  per-question scores; the same statistics apply instantly. A blank template
-  is downloadable in-app.
+- **Bring your own eval**: drop a CSV (or paste a link to one) of per-question
+  scores; the same statistics apply instantly. A blank template is
+  downloadable in-app, and
+  [`example-eval.csv`](public/datasets/example-eval.csv) is a ready-made demo —
+  paste its
+  [raw link](https://raw.githubusercontent.com/jv8-alt/fluke/main/public/datasets/example-eval.csv)
+  or download and drop it, either works.
 - **Share any view**: the Copy-link button encodes the dataset, toggles, and
   even an uploaded CSV into the URL.
 - **Check an eval's eyesight**: an interactive power panel answers "how many
