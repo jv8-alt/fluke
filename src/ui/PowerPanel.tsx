@@ -236,17 +236,26 @@ export function PowerPanel({
             behind "what's this?" carries the crucial caveat that lowering
             temperature is NOT a substitute.
           */}
-          <label style={{ gridColumn: "1/-1" }}>
-            <input
-              type="checkbox"
-              checked={ntp}
-              onChange={(e) => setNtp(e.currentTarget.checked)}
-            />{" "}
-            Grade by the model’s own answer probabilities{" "}
+          {/*
+            The trigger sits OUTSIDE the <label>. Inside it, clicking it
+            activates the label, which forwards a click to the checkbox —
+            toggling the box and, because that forwarded click bubbles as a
+            non-trigger target, immediately closing the popover that had just
+            opened.
+          */}
+          <div style={{ gridColumn: "1/-1" }}>
+            <label style={{ display: "inline" }}>
+              <input
+                type="checkbox"
+                checked={ntp}
+                onChange={(e) => setNtp(e.currentTarget.checked)}
+              />{" "}
+              Grade by the model’s own answer probabilities
+            </label>{" "}
             <span class="pm" data-pop="ntp">
               what’s this?
             </span>
-          </label>
+          </div>
           <div class="pout">
             <b>≈ {out.n.toLocaleString()}</b> questions needed to reliably spot
             a {out.mdePts.toFixed(1)}-point gap.

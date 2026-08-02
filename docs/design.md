@@ -1,228 +1,122 @@
 # Design rationale
 
-*Companion to the [README](../README.md). Live app:
-https://jv8-alt.github.io/fluke/ · Method: Miller,
-[Adding Error Bars to Evals](https://arxiv.org/abs/2411.00640) (Anthropic, 2024).*
+Live: [jv8-alt.github.io/fluke](https://jv8-alt.github.io/fluke/) · Method: Miller, [*Adding Error Bars to Evals*](https://arxiv.org/abs/2411.00640) (Anthropic, 2024) · Companion to the [README](../README.md)
 
-## Why this theme, why this approach
+## Background
 
-This project sits deliberately on two of the assignment's themes at once:
-**Exploration & Understanding** (making a genuinely hard technical idea —
-sampling error, clustering, paired comparison, statistical power — graspable
-without equations) and **Evaluation & Data Quality** (the idea being explained
-is itself the foundation of trustworthy model evaluation).
+For this exercise, I built a very simple app at the intersection of two suggested themes: **Exploration & Understanding** (make a hard technical idea graspable without equations) and **Evaluation & Data Quality** (the idea *is* how you trust a model comparison).
 
-The seed was a recurring, practical annoyance: every model release ships a
-benchmark table, and it is genuinely unclear whether 87.5% vs 85.2% means
-anything. Miller's paper answers that question rigorously — but as a paper,
-full of estimator algebra, read mostly by people who already believed its
-conclusion. Meanwhile the machinery already exists as Python libraries
-(`evalci`, `evalstats`, Inspect AI's `stderr()`, Every Eval Ever). **The gap
-was never the statistics; it was the missing front-end.** Those libraries
-compute a number and hand it back; what nobody had built was somewhere to
-*navigate* the ideas, and the same surface turns out to serve three different
-jobs:
+The seed of the idea, however, had already been taking shape for some time. Whenever a new model comes out, there's a benchmark table that touts the model's benchmark scores as compared to competitors -- "87.5% on math problems vs 85.2% for the previous reigning champ." How accurate are these scores? If we kept asking the models the same questions would that gap be identical each time? How much of this is marketing vs. reality? How does this all work?
 
-- **Learn** — see what each correction does by watching it change a verdict,
-  rather than reading its estimator.
-- **Check** — take a claim someone published and find out whether it survives
-  honest error bars, using the upload path or a shared link.
-- **Plan** — work out what your own eval would need before you run it: how
-  many questions to resolve the gap you care about, and whether repeats or
-  probability-grading buy you more than more questions.
+That rabbit hole led me to [*Adding Error Bars to Evals*](https://arxiv.org/abs/2411.00640) -- by Evan Miller from Anthropic (2024). The paper answers these questions rigorously, but then it seemed to me that these valuable answers transitioned into an after-life as estimator algebra. Maybe it exists somewhere, but I couldn't find any experience that brought these conclusions to life in a way that accommodates a broader audience.
 
-So the approach is adoption, not invention: a zero-install page where the
-paper's corrections are three checkboxes over a live leaderboard, and the
-reviewer's own eyes watch a verdict flip. Prior art is cited in-app; our claim
-is the experience, not the math.
+Much of the machinery does already exist as Python libraries (`evalci`, `evalstats`, Inspect AI's `stderr()`, Every Eval Ever). Each will hand you a number. **What none of them gives you is somewhere to navigate** — to *see* a familiar leaderboard claim fall apart under honest statistics, and to frictionlessly play with variables to better understand their impact individually and collectively. 
 
-## What makes it interesting / non-obvious
+"Fluke" is my attempt to bridge that gap.
 
-**The verdict is the interface.** Scores get margins, but the headline object
-is the *verdict* — "real ✓" vs "too close to call" — because that's what
-leaderboard readers actually consume. The whole app is engineered so the user
-watches verdicts change while means stay identical: the same numbers, read
-honestly, reverse the story. The claim line above the table re-derives the
-one-sentence takeaway on every toggle.
+## Core principles
 
-**Reconstructing data the paper never published.** The guided tour reproduces
-the paper's worked example (fictional models Galleon vs Dreadnought), but the
-paper only publishes summary statistics — and the demo computes everything
-from per-question data through our own estimators. So paper mode is
-*synthesized*: MATH and HumanEval are built deterministically from 2×2
-agreement counts derived by hand (both-right / only-A / only-B / both-wrong
-fully determine every paired statistic), and MGSM — which needs cluster
-structure — comes from a seeded generator with three independently tunable
-noise sources (shared problem difficulty, per-model problem strength, shared
-item luck), each calibrated against one published statistic. A tolerance test
-suite pins the reproduction, including the headline: naive scoreboard 2-of-3
-one way, honest stats leave exactly one real win the other way. One honest
-wrinkle, documented in-app: the paper's fictional numbers aren't all *jointly*
-achievable with binary scores (a [0,1] score with mean 83.6% caps its SE below
-the stated 3.2), so correlations carry a looser tolerance than means and SEs.
+The foundations of the Fluke experience are these five directives, in plain language, that I took from the paper:
 
-**Real data turned out to tell better stories than the fiction.** Three
-findings from wiring real archive logs in, all preserved deliberately:
+1. **Report the margin of error with every score.** A benchmark score is a poll, not a fact: the questions are a sample standing in for all possible questions of that kind.
+2. **Account for clustering.** Bundled questions are less data than they look. Five questions about one passage, or one question in ten languages, rise and fall as a bloc — like polling 1,000 people from 200 households. Honest error bars can be 2–3× wider than naive ones.
+3. **Reduce answer luck the legitimate ways — never by lowering temperature.** Score noise = question luck (only more questions help) + answer luck (shrink with K repeats, or eliminate by reading token probabilities). Temperature 0 (no randomness/variation) measures a different model.
+4. **Compare models question-by-question, not scoreboard-to-scoreboard.** When both models answered the same questions, subtract per question first: shared difficulty cancels, leaving the real between-model signal. Same averages, meaningfully tighter bars — a free win whenever scores correlate (they nearly always do).
+5. **Check the eval's eyesight before trusting it.** Every benchmark has a smallest gap it can reliably detect, set mostly by question count (~1,000 questions to see a 3-point gap). Know the threshold before you run the eval — or before you believe someone else's.
 
-1. *MMLU clustering is enormous.* Treated as 14,042 independent questions,
-   margins are ±1.2pp; counted as 57 subjects, ±8pp — because models genuinely
-   differ subject by subject. Textbook-sized clustering corrections (the
-   paper's "2–3×") are the mild case.
-2. *A fine-tune vs its base is the perfect flip demo.* `vicuna-13b-v1.5` vs
-   `Llama-2-13b-hf` (2.1pp apart) flips **real → too close → real** as the
-   corrections stack: clustering honestly destroys the naive verdict, then
-   question-by-question pairing — devastatingly effective between sibling
-   models, whose per-question scores correlate heavily — earns it back. Found
-   by an automated scan (`scripts/find_close_pair.py`); the scan also showed
-   *every* 2–7pp MMLU pair double-flips, so this isn't a cherry-pick, it's the
-   norm.
-3. *The DROP dataset is a broken eval, on purpose.* Its ~6.5% scores are the
-   real 2023 harness answer-parsing bug that got DROP pulled from the
-   leaderboard. We kept it: "check the eval before trusting its scoreboard" is
-   the paper's fifth recommendation, and here it is in the wild.
+The paper is full of difficult equations that are beyond the grasp of non-statisticians like me. The app's job is to let someone *feel* those five points without reading them first — and still drill into the formula and deeper context when they want to.
 
-**Designing away the overlapping-error-bars fallacy.** The most common
-misreading in the field is to put a margin on each model's score, see the two
-ranges overlap, and conclude there's no real difference. The close-race
-dataset is exactly that trap: vicuna at 55.7% and Llama-2-13b at 53.6% carry
-margins of ±5.9 and ±5.6 that overlap almost entirely, yet the 2.1-point gap
-between them is solid. Both facts are true — each model's *absolute* score
-really is that soft, because models are wildly uneven across subjects
-(28–85% here) so which subjects the benchmark covers swings the headline
-number; but that subject lottery lifts and drops both models together (their
-per-subject scores correlate at 0.97), so it cancels out of the difference.
-We first tried to *explain* the tension in place, annotating each score with
-how much of its swing cancels. It added noise and confused more than it
-taught. The fix that worked was structural: **the leaderboard shows bare
-scores and, beside the verdict, only the gap and the gap's margin** — the
-evidence the verdict is actually read from. Per-model margins move one tier
-down into the gaps panel, explicitly labelled "each score on its own", where
-the two magnitudes can be compared deliberately rather than collided with
-accidentally. This also puts the app in line with the paper's own fourth
-recommendation: the scoreboard-to-scoreboard comparison is the mistake, and a
-± hanging off each score is an invitation to make it.
+## The solution
 
-**One pipeline for all data.** Bundled snapshots, dropped CSVs, and
-URL-fetched CSVs all flow through the same parser into the same stats — so the
-demo is also a real tool: any eval with per-question scores gets the same
-treatment, and any view (including an uploaded dataset) is shareable as a URL.
+The experience of the app is centered on deconstructing and nuancing leaderboards and their benchmarks. In its most rudimentary form, it can serve as an interactive companion piece to Miller's paper.
 
-**Progressive disclosure as a hard rule.** Default-visible text contains no
-statistics vocabulary — "margin of error," "could just be luck," "too close to
-call," the paper's own poll-and-households analogies. Every simplified claim
-carries a dashed drill-in whose popover gives the plain-language mechanism,
-the exact formula, and the paper section (§, Eq.) it implements. Experts can
-audit every number; nobody else ever has to see a σ.
+### "Paper mode" -- bringing Miller's work to life
 
-## Key design decisions & tradeoffs
+#### First: The leaderboard everyone believes
 
-- **Fully static, no backend.** The original sketch included a small
-  upload/storage API; we cut it for scope and honesty — the stats run
-  client-side anyway. Sharing works by encoding state (and even the uploaded
-  CSV itself, size-guarded) into the URL fragment. Tradeoff: very large
-  uploads can't be shared as links (the app says so and suggests sharing the
-  file); a storage backend can be added later behind the same load-a-dataset
-  seam.
-- **Stats as pure, zero-dependency functions with hand-computed tests.** Every
-  estimator lives in `src/stats/` with test cases whose expected values are
-  derived in comments (plus the paper's own worked examples: ≈969 questions
-  for a 3-point gap; K=2 resampling cutting variance by exactly ⅓). Tradeoff:
-  we validated against hand arithmetic inside the build window; cross-checking
-  against `evalci`/`statsmodels` golden fixtures is the first listed follow-up.
-- **Tolerance-based reproduction rather than exact construction.** Matching
-  the paper's numbers to reported precision (±0.15pp deterministic, ±0.3pp
-  seeded) with documented limits beat chasing an exact joint construction that
-  provably doesn't exist for the correlations.
-- **Strict CSV schema v1** (`model,item_id,score` + optional
-  `cluster_id,sample_k,benchmark`), friendly row-level errors, and a
-  downloadable template — rather than format sniffing. Repeats (`sample_k`)
-  are averaged, which keeps standard errors valid; the ω²/σ² decomposition
-  they'd enable is deferred. This is the tradeoff we'd revisit first: testing
-  the URL loader against real sources showed the schema, not the plumbing, is
-  what blocks people. Fetching works fine from the hosts we advertise
-  (`raw.githubusercontent.com` and HuggingFace `resolve/main` both send
-  permissive CORS headers; `github.com/.../blob/...` page URLs do not, and are
-  the likely paste mistake), but a genuine public CSV pulled from HuggingFace
-  downloads successfully and then fails validation, because essentially no
-  published CSV happens to be in `model,item_id,score` form. As shipped, the
-  URL box is a convenience for a file *you* already formatted, not a way to
-  pull in arbitrary public data — and the in-app placeholder currently
-  oversells that.
-- **The power panel uses the paper's illustrative variances**, clearly labeled
-  in its "assumptions" popover: estimating question-luck vs answer-luck from a
-  loaded dataset honestly requires per-question repeats, which neither the
-  archive logs nor typical uploads have.
-- **Preact + Vite + hand-drawn SVG, ~20 KB gzipped, no chart library, no LLM
-  calls, no keys, no runtime network beyond fetching bundled CSVs.**
-- **Process**: the build followed a Mikado-method dependency graph
-  ([MIKADO.md](../MIKADO.md)) — small reviewable PRs per node, parallel
-  branches in git worktrees, cross-branch conformance tests at the convergence
-  node (the real CSVs must round-trip through the upload parser and reproduce
-  the archive's own aggregates through our estimators).
+![The familiar scoreboard — Dreadnought wins 2 of 3](screenshots/01-naive-scoreboard.png)
 
-## How this would extend with more time
+#### Include the margin of error, and the story starts to change
 
-1. **Golden-fixture validation**: a Python script cross-checking every
-   estimator against `evalci`/`statsmodels` on shared fixtures, committed to
-   CI.
-2. **Answer-luck decomposition**: parse `sample_k` repeats into ω²/σ²
-   estimates, feed the power panel dataset-estimated variances, and visualize
-   the question-luck floor as K grows.
-3. **More models, more benchmarks, n-way comparison**: the archive has
-   hundreds of models; the table currently compares the first two models of a
-   dataset. A model picker plus pairwise matrix view is a natural next step.
-4. **Take whatever data people already have.** The single biggest limit on
-   this being a tool rather than a demo. Inspecting the formats real eval
-   tooling emits turns up a structural mismatch, not just a naming one: a
-   per-sample file from lm-evaluation-harness carries
-   `example, metrics{acc,f1,em}, gold, predictions, …` — **no model column and
-   no cluster column**, because the model is the repo name and the task is the
-   filename. Inspect AI logs have the same shape (one JSON log per model per
-   task, samples nested inside). So the burden we impose isn't "rename a
-   header", it's "concatenate two exports and synthesize a `model` column
-   before we'll look at your data." Worth doing in this order, cheapest first:
+![Margins of error: HumanEval is already too close to call](screenshots/02-margins-on.png)
 
-   - **Column synonyms** — `model_name`/`system`/`run`; `question_id`/`qid`/
-     `id`/`doc_id`/`example`; `acc`/`correct`/`is_correct`/`em`/`f1`/`pass`;
-     `subject`/`category`/`group`/`topic`. A lookup table. Note `task` is
-     genuinely ambiguous — it means *benchmark* in a multi-eval export but
-     *cluster* under MMLU-style task naming (`hendrycksTest-<subject>`) — so it
-     should map only with a visible warning rather than a silent guess.
-   - **Score encodings** — `True`/`False`, `correct`/`incorrect`, `yes`/`no`,
-     `PASS`/`FAIL`, and 0–100 percentages (inferred only when values exceed 1,
-     since a column of `85`s is otherwise ambiguous between percent and
-     out-of-range).
-   - **Wide format** — `item_id, model_a, model_b, …`, one column per model.
-     What a spreadsheet user naturally builds and what any pivot emits;
-     detectable as "no `model` column + ≥2 numeric columns".
-   - **Multi-file merge** — the endpoint, and the one that actually removes the
-     burden above: drop two per-model exports, join on item id, take model
-     names from the filenames. This is what makes "bring your own eval" true
-     for someone coming straight out of a harness run.
-   - **Native log adapters** — harness `.jsonl` and Inspect `.json`/`.eval`
-     directly. Realistically one adapter per tool, versioned, which is why it
-     sits last despite being the most seamless outcome.
+#### Apply all of the paper's core corrections, and the verdict fully flips
 
-   Throughout, every inference should surface as a visible warning ("read
-   `acc` as the score column") rather than a silent guess — the parser's
-   existing "friendly and specific" contract applies to what it *assumes*, not
-   just to what it rejects.
-5. **Share-link hardening**: compression (lz-string) and a checksum (a
-   truncated link currently has one undetectable failure mode, documented in
-   tests).
-6. **Exact paper-mode construction** for the correlation targets, or better:
-   replace the fictional example with a real pair once per-question data for a
-   frontier-model comparison is publishable.
+![All corrections on: only MATH survives](screenshots/03-all-corrections.png)
 
-### TODO
-- Error handling and other productionalization
-- UI/UX reflow for precedence (selected datasets on left/top, rather than selecting from below to apply above)
+### Drill-in: More detail for subject matter experts or the merely adventurous
 
-## Time spent
+The leaderboard verdict changes tell a story on their own, but what are the mechanics and maths underpinning these changes? There is a "gaps" section that goes into a bit more detail, and the experience is filled with richly detailed pop-ups for those who want to see the actual formulas and/or connect back directly to the paper for more context.
 
-Roughly **2 hours** for the core implementation (scaffold → deployed guided
-demo → datasets/sharing/power panel), inside the assignment's target window,
-plus about an hour of planning and clickable-mockup iteration beforehand and
-short post-launch tweak rounds afterwards (tour memory, toggle feedback, the
-close-race dataset) driven by live testing. <!-- adjust to taste before
-submitting -->
+![Drill-in](screenshots/drill-in.png)
+
+### Validate and share
+
+Though support is very limited for now, I wanted users to be able to evaluate data beyond the scope of the paper. I added some examples of real-world benchmarks and models that I found online, as well as an option for users to upload their own data via CSV, including via url: 
+
+![Bring-data](screenshots/bring-data.png)
+
+Note: The app currently requires very specific, non-standard formatting -- a deficit that I would want to prioritize for follow-up.
+
+### Plan
+
+This stretch goal addressed a slightly different use case -- building on the paper's foundational insights to give model tuners an experience that helps them determine what their eval would need before a gap of a certain size could be "true" and meaningful:
+
+![Plan](screenshots/plan.png)
+
+I debated leaving this off because it's the biggest departure from the rest of the experience, and because it moves me further out of my own comfort zone into how model tuning might actually work. In the end, I decided to keep it as a pointer to use cases and topics that I'd like to learn more about.
+
+## Key decisions & tradeoffs
+
+**The verdict is the interface.** Assumed leaderboard readers don't consume "SEs" or other statistical terms -- they consume "who won." So the headline object is the verdict ("real ✓" / "too close to call"), and the claim line re-derives the one-sentence takeaway on every toggle. Means stay identical; only the honesty of the reading changes.
+
+**Plain language first, formulas on demand.** Default-visible text uses the paper's own analogies — polls, households, "could just be luck." Every dashed value opens a popover with the mechanism, the exact formula, and the paper § it implements. Experts can audit every number; nobody else ever has to see a σ.
+
+**One pipeline for all data.** Bundled snapshots, dropped CSVs, and URL-fetched CSVs all flow through the same parser into the same stats. The demo *is* a real tool: any eval with per-question scores gets the same treatment, and any view (including an upload) is shareable as a URL.
+
+**Fully static, no backend.** The original sketch had a small upload/storage API; we cut it for scope and honesty — the stats run client-side anyway. Sharing encodes state (and small CSVs) into the URL fragment. Tradeoff: very large uploads can't be linked; the app says so. A storage backend can still slot in behind the same load-a-dataset seam later.
+
+**Strict CSV schema v1**, friendly row-level errors, downloadable template — not format sniffing. This made sense for a 2-hour build, but would add a lot of friction in production. This is one of the tradeoffs I'd revisit first. Fetching from the hosts we advertise works fine; what blocks people is that almost no published CSV happens to be in `model,item_id,score` form. As shipped, the URL box is a convenience for a file *you* already formatted.
+
+**Stats as pure, zero-dependency functions** with hand-computed expected values in the tests (plus the paper's worked examples: ≈969 questions for a 3-point gap). We validated against hand arithmetic inside the build window; cross-checking against `evalci`/`statsmodels` golden fixtures is the first honest follow-up.
+
+**Typescript only/primarily** made sense for the rich interactive experience I envisioned. But there is some friction with `evalci` and other stats utilities, as well as the scripts that the agents used to help wrangle data. It may be acceptable in the eventual production version of this app to maintain Python just in dev/test/build layers, even as we build the experience out in Typescript, but it'd be worth revisiting.
+
+**~20 KB gzipped, Preact + Vite, hand-drawn SVG, no chart library, no LLM calls, no keys.** The constraint that kept the experience the product.
+
+## Where to go from here?
+
+### Make sure it's true 😅
+
+- Do subject matter experts even agree with Miller's assessments, or with my implementation thereof? arXiv.org is for pre-print papers that have not yet been peer-reviewed. (I think I even discovered a typo between Table 1 and Table 2, 87.7% in one, 86.7% in the other, but that needs validation.) I am not enough of statistician to fully validate.
+- Even if subject matter experts fully agree, are the observations stale? 2 years in this field is 2 lifetimes. Does everyone now implement Miller's suggestions? Are there new concerns? If I'd had more time I would have done a lot more validation around this.
+
+Beyond that, I took some shortcuts to just get it basically working. My own margins of error are acceptable for this exercise, but not acceptable when you're trying to evaluate accuracy -- particularly with a tool that is trying to correct for imprecision to start with. There are really two gaps here: whether my numbers are *calculated* right, and whether they answer the *right question*.
+
+*Are the numbers right?*
+
+- **Check them against the established libraries.** Automated comparisons against `evalci` / `statsmodels` on shared examples — trust the numbers the way the UI asks you to trust a verdict.
+- **Fix the few-groups case.** Once you count groups instead of questions, your real sample size is the *number of groups* — and when groups are few, my margins come out slightly too narrow. MMLU's 57 subjects and the example file's 40 passages each want a margin about 2–3% wider than I show, plus a known correction to the formula itself. I checked, and neither changes any verdict in the shipped data — but a tool that corrects overconfidence shouldn't carry its own.
+- **Handle very high and very low scores.** The standard formula I use misbehaves near 0% and 100%. It makes no difference at 65%, and is materially wrong at 3% or 97% — which uploaded data will hit.
+- **Measure answer luck from the data.** Repeat runs (`sample_k`) would show how much of the noise is the model being inconsistent, versus the questions just being a sample. Today the "how big must an eval be?" panel uses the paper's illustrative figures rather than the loaded dataset's own.
+
+*Are we asking the right question?*
+
+- **Three benchmarks means three chances to be wrong.** Each verdict tolerates a 1-in-20 false alarm, so across three the odds of at least one land nearer 1 in 7 — and real leaderboards have dozens. The app ignores this, which is awkward for a tool premised on "you're more certain than you should be."
+- **Say what the error bars assume.** They answer: *if we drew a different random sample of questions, how much would the score move?* But MMLU wasn't drawn from a pool of possible questions — it was hand-built. If the 164 HumanEval problems are exactly what you care about, there's no sampling luck to speak of, and the bars answer a question you didn't ask. That's a judgement call, and the app states it nowhere.
+- **Put real models in the tour.** Paper mode is synthetic — constructed to reproduce the paper's published summary numbers. That makes it an honest demonstration, but not evidence. Swap in a real comparison as soon as per-question data for one is publishable.
+
+**Make it more useful** 
+
+- Unlock true leaderboard mode: There are so many models and benchmarks out there, so much data to make use of. We should be able to replicate common leaderboards across many more models and benchmarks at once. Change the variables and see how verdicts do or do not change.
+- Treat harness reality as the dataset API. The burden today isn't "rename a header" — it's "concatenate two exports and synthesize a `model` column." **Multi-file merge** (drop two per-model logs, join on item id, take names from filenames) is the endpoint that actually makes "bring your own eval" a reality.
+- Accounts and persistence: Users should be able to upload and play with their own data over time. The front-end only implementation we currently have, with the extremely limited sharing, amounts to toy-mode. We'd need an API, persistence layer, and a lot more to turn this toy into a tool.
+- UI/UX: The flow is a bit awkward -- selecting your dataset below and having it apply to experiences above. Without referencing that selection interface below it can be difficult to orient to what you're looking at. We should reflow it so that data selection is left/top and the experiences below flow from it.
+- Polish: We have very little in the way of error handling. In-experience messaging is inconsistent and sometimes unintuitive. Much we can do here!
+
+## Time
+
+- Planning: ~1 hour (including time spent outside Claude)
+- Building: ~2 hours
+- Tweaking/Fixing: ~1 hour
+- Demo and documentation: TBD
