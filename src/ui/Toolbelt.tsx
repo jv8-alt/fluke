@@ -44,17 +44,20 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
   const fileInput = useRef<HTMLInputElement>(null);
   const urlInput = useRef<HTMLInputElement>(null);
 
-  const handleText = (text: string, sourceLabel: string) => {
+  /** Returns whether the text parsed — callers use it to avoid reporting
+   *  success for a file that arrived intact but failed validation. */
+  const handleText = (text: string, sourceLabel: string): boolean => {
     const res = parseCsv(text);
     if (!res.ok) {
       setErrors(res.errors);
       setWarnings([]);
-      return;
+      return false;
     }
     setErrors([]);
     setWarnings(res.warnings);
     const ds = { ...res.dataset, label: sourceLabel };
     onParsed(ds, text, summarize(ds));
+    return true;
   };
 
   const handleFile = (f: File) =>
@@ -86,11 +89,21 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
       setUrlMsg({ text: res.message, warn: true });
       return;
     }
-    setUrlMsg({
-      text: "Loaded from link. Links are shareable — Copy link reproduces this view.",
-      warn: false,
-    });
-    handleText(res.text, u.split("/").pop() || "linked.csv");
+    // Only claim success once the file has actually parsed — fetching a real
+    // CSV that isn't in our schema is the common case, and reporting "Loaded"
+    // beside a validation error reads as a contradiction.
+    const parsed = handleText(res.text, u.split("/").pop() || "linked.csv");
+    setUrlMsg(
+      parsed
+        ? {
+            text: "Loaded from link. Links are shareable — Copy link reproduces this view.",
+            warn: false,
+          }
+        : {
+            text: "Downloaded that file, but it isn't in the expected format — see above.",
+            warn: true,
+          },
+    );
   };
 
   return (
@@ -188,7 +201,10 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
           <input
             ref={urlInput}
             type="text"
-            placeholder="…or paste a link to a CSV (HuggingFace, GitHub)"
+            /* Names the constraint that actually bites (the file must already
+               use the columns described above) and the host form that works —
+               github.com/…/blob/… page URLs are CORS-blocked, raw. is not. */
+            placeholder="…or paste a link to a CSV in this format (raw.githubusercontent.com, HuggingFace)"
             onKeyDown={(e) => {
               if (e.key === "Enter") loadUrl();
             }}
