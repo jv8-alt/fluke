@@ -254,7 +254,7 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
         <div class="fine urltip">
           no link handy?{" "}
           <button class="lnk" onClick={insertExample}>
-            use our example file
+            try our example file
           </button>
         </div>
         {urlMsg && <div class={`sub ${urlMsg.warn ? "warn" : ""}`}>{urlMsg.text}</div>}
