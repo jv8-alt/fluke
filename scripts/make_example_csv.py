@@ -11,28 +11,35 @@ and `tuned-v2`) — it is a format and behaviour demo, not evidence about any
 real model. It is deliberately shaped around the question people actually
 bring to this app: *did my fine-tune actually help?*
 
-The point it makes is that **the bigger gap is the fake one** — which is
-exactly the mistake a scoreboard invites, and it comes out of the structure
-of the two benchmarks rather than out of their headline numbers:
+The point it makes is that **the size of a gap tells you nothing about
+whether it is real**. Both benchmarks show tuned-v2 ahead by almost exactly
+the same amount — and only one of those leads survives:
 
-  reading    — 480 questions in 40 passages (`cluster_id` = passage).
-               tuned-v2 leads by ~8 points and that clears the naive margin,
+  reading    — 150 questions in 30 passages (`cluster_id` = passage).
+               tuned-v2 leads by ~13 points, which clears the naive margin,
                so it reads as real. But the advantage is concentrated in a
                few passages rather than spread across questions, so counting
-               each passage once roughly doubles the margin and the lead
+               each passage once widens the margin past the gap and the lead
                stops being readable. The clustering lesson, on a file you
                loaded yourself.
-  arithmetic — 500 independent questions, no clusters. A *smaller* lead
-               (~7 points) that survives every correction, because there is
+  arithmetic — 190 independent questions, no clusters. A lead of ~13 points
+               too — but it survives every correction, because there is
                nothing for the corrections to expose.
 
-So the honest read is "the arithmetic gain is real; the reading gain can't
-be distinguished from a lucky draw of passages" — the reverse of what the
-raw scoreboard suggests.
+Same headline number, opposite verdicts, purely because of how the questions
+are structured. A scoreboard cannot show you that difference.
 
 Distinct `sample_k` values are NOT used here (the template shown in-app
-covers that column); keeping one row per model/question keeps the file small
-enough that download-then-upload is instant.
+covers that column); one row per model/question keeps the file small.
+
+## Why it is this small
+
+The file is sized so a loaded view stays SHAREABLE: "Copy link" packs the
+CSV into the URL fragment, which is capped (see MAX_FRAGMENT_CHARS in
+src/data/share.ts). Compressed, this file lands around 5.3k of a 6k budget.
+Growing it — more questions, longer ids — buys statistical comfort at the
+cost of the link, so re-check `npm test` (src/data/example.test.ts asserts
+the link still fits) after changing any size constant here.
 
 Usage:  python3 scripts/make_example_csv.py [--check]
         --check recomputes the statistics and prints the verdicts without
@@ -52,16 +59,16 @@ OUT = os.path.join(REPO_ROOT, "public", "datasets", "example-eval.csv")
 SEED = 20241106  # the paper's arXiv submission date, as elsewhere in this repo
 MODEL_A, MODEL_B = "baseline-v1", "tuned-v2"
 
-N_PASSAGES, PER_PASSAGE = 40, 12
+N_PASSAGES, PER_PASSAGE = 30, 5
 # Enough arithmetic questions that a *believable* gain (single digits) clears
 # the margin — at n=200 nothing under ~10pp is detectable, which would have
 # forced a cartoonish gap to make the point.
-N_ARITHMETIC = 500
+N_ARITHMETIC = 190
 
 # reading: mean per-passage advantage (logit) and how much it varies between
 # passages. The spread is the whole point — it is what the clustered estimator
 # sees and the naive one misses.
-EDGE_MEAN, EDGE_SPREAD = 0.75, 2.4
+EDGE_MEAN, EDGE_SPREAD = 1.0, 2.3
 
 
 def sigmoid(x: float) -> float:
@@ -88,11 +95,11 @@ def build():
     edges = [e + shift for e in edges]
 
     for p in range(N_PASSAGES):
-        passage = f"passage-{p:02d}"
+        passage = f"p{p:02d}"
         difficulty = rng.gauss(0.0, 1.15)  # shared: some passages are just hard
         edge = edges[p]                    # tuned-v2's advantage on THIS passage
         for q in range(PER_PASSAGE):
-            item = f"read-{p:02d}-{q}"
+            item = f"r{p:02d}-{q}"
             wobble = rng.gauss(0.0, 0.45)  # per-question noise, shared by both
             pa = sigmoid(0.25 + difficulty + wobble)
             pb = sigmoid(0.25 + difficulty + wobble + edge)
@@ -103,10 +110,10 @@ def build():
     # cluster_id column value, so this benchmark is unaffected by the
     # "count grouped questions once" toggle. ---
     for i in range(N_ARITHMETIC):
-        item = f"calc-{i:03d}"
+        item = f"c{i:03d}"
         difficulty = rng.gauss(0.0, 0.9)
         pa = sigmoid(0.15 + difficulty)
-        pb = sigmoid(0.15 + difficulty + 0.33)
+        pb = sigmoid(0.15 + difficulty + 0.80)
         rows.append(("arithmetic", MODEL_A, item, "", int(rng.random() < pa)))
         rows.append(("arithmetic", MODEL_B, item, "", int(rng.random() < pb)))
 

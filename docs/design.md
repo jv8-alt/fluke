@@ -96,7 +96,7 @@ Beyond that, I took some shortcuts to just get it basically working. My own marg
 *Are the numbers right?*
 
 - **Check them against the established libraries.** Automated comparisons against `evalci` / `statsmodels` on shared examples — trust the numbers the way the UI asks you to trust a verdict.
-- **Fix the few-groups case.** Once you count groups instead of questions, your real sample size is the *number of groups* — and when groups are few, my margins come out slightly too narrow. MMLU's 57 subjects and the example file's 40 passages each want a margin about 2–3% wider than I show, plus a known correction to the formula itself. I checked, and neither changes any verdict in the shipped data — but a tool that corrects overconfidence shouldn't carry its own.
+- **Fix the few-groups case.** Once you count groups instead of questions, your real sample size is the *number of groups* — and when groups are few, my margins come out slightly too narrow. MMLU's 57 subjects and the example file's 30 passages each want a margin about 2–4% wider than I show, plus a known correction to the formula itself. I checked, and neither changes any verdict in the shipped data — but a tool that corrects overconfidence shouldn't carry its own.
 - **Handle very high and very low scores.** The standard formula I use misbehaves near 0% and 100%. It makes no difference at 65%, and is materially wrong at 3% or 97% — which uploaded data will hit.
 - **Measure answer luck from the data.** Repeat runs (`sample_k`) would show how much of the noise is the model being inconsistent, versus the questions just being a sample. Today the "how big must an eval be?" panel uses the paper's illustrative figures rather than the loaded dataset's own.
 

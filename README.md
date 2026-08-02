@@ -23,7 +23,7 @@ the paper's corrections, one checkbox at a time.
   [raw link](https://raw.githubusercontent.com/jv8-alt/fluke/main/public/datasets/example-eval.csv)
   or download and drop it, either works.
 - **Share any view**: the Copy-link button encodes the dataset, toggles, and
-  even an uploaded CSV into the URL (if it's small enough)
+  even an uploaded CSV into the URL — compressed, so the example above fits.
 - **Check an eval's eyesight**: an interactive power panel answers "how many
   questions does a benchmark need before a 3-point gap means anything?"
   (the paper's answer: ≈969, reproduced live).
