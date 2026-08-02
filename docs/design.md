@@ -137,7 +137,17 @@ audit every number; nobody else ever has to see a σ.
   `cluster_id,sample_k,benchmark`), friendly row-level errors, and a
   downloadable template — rather than format sniffing. Repeats (`sample_k`)
   are averaged, which keeps standard errors valid; the ω²/σ² decomposition
-  they'd enable is deferred.
+  they'd enable is deferred. This is the tradeoff we'd revisit first: testing
+  the URL loader against real sources showed the schema, not the plumbing, is
+  what blocks people. Fetching works fine from the hosts we advertise
+  (`raw.githubusercontent.com` and HuggingFace `resolve/main` both send
+  permissive CORS headers; `github.com/.../blob/...` page URLs do not, and are
+  the likely paste mistake), but a genuine public CSV pulled from HuggingFace
+  downloads successfully and then fails validation, because essentially no
+  published CSV happens to be in `model,item_id,score` form. As shipped, the
+  URL box is a convenience for a file *you* already formatted, not a way to
+  pull in arbitrary public data — and the in-app placeholder currently
+  oversells that.
 - **The power panel uses the paper's illustrative variances**, clearly labeled
   in its "assumptions" popover: estimating question-luck vs answer-luck from a
   loaded dataset honestly requires per-question repeats, which neither the
@@ -161,8 +171,42 @@ audit every number; nobody else ever has to see a σ.
 3. **More models, more benchmarks, n-way comparison**: the archive has
    hundreds of models; the table currently compares the first two models of a
    dataset. A model picker plus pairwise matrix view is a natural next step.
-4. **Import adapters**: Inspect AI logs and lm-evaluation-harness outputs
-   directly, plus CSV sniffing for near-miss formats.
+4. **Take whatever data people already have.** The single biggest limit on
+   this being a tool rather than a demo. Inspecting the formats real eval
+   tooling emits turns up a structural mismatch, not just a naming one: a
+   per-sample file from lm-evaluation-harness carries
+   `example, metrics{acc,f1,em}, gold, predictions, …` — **no model column and
+   no cluster column**, because the model is the repo name and the task is the
+   filename. Inspect AI logs have the same shape (one JSON log per model per
+   task, samples nested inside). So the burden we impose isn't "rename a
+   header", it's "concatenate two exports and synthesize a `model` column
+   before we'll look at your data." Worth doing in this order, cheapest first:
+
+   - **Column synonyms** — `model_name`/`system`/`run`; `question_id`/`qid`/
+     `id`/`doc_id`/`example`; `acc`/`correct`/`is_correct`/`em`/`f1`/`pass`;
+     `subject`/`category`/`group`/`topic`. A lookup table. Note `task` is
+     genuinely ambiguous — it means *benchmark* in a multi-eval export but
+     *cluster* under MMLU-style task naming (`hendrycksTest-<subject>`) — so it
+     should map only with a visible warning rather than a silent guess.
+   - **Score encodings** — `True`/`False`, `correct`/`incorrect`, `yes`/`no`,
+     `PASS`/`FAIL`, and 0–100 percentages (inferred only when values exceed 1,
+     since a column of `85`s is otherwise ambiguous between percent and
+     out-of-range).
+   - **Wide format** — `item_id, model_a, model_b, …`, one column per model.
+     What a spreadsheet user naturally builds and what any pivot emits;
+     detectable as "no `model` column + ≥2 numeric columns".
+   - **Multi-file merge** — the endpoint, and the one that actually removes the
+     burden above: drop two per-model exports, join on item id, take model
+     names from the filenames. This is what makes "bring your own eval" true
+     for someone coming straight out of a harness run.
+   - **Native log adapters** — harness `.jsonl` and Inspect `.json`/`.eval`
+     directly. Realistically one adapter per tool, versioned, which is why it
+     sits last despite being the most seamless outcome.
+
+   Throughout, every inference should surface as a visible warning ("read
+   `acc` as the score column") rather than a silent guess — the parser's
+   existing "friendly and specific" contract applies to what it *assumes*, not
+   just to what it rejects.
 5. **Share-link hardening**: compression (lz-string) and a checksum (a
    truncated link currently has one undetectable failure mode, documented in
    tests).
