@@ -89,15 +89,16 @@ export function App() {
   // happens in an effect below, after mount, so the initial render stays a
   // pure function of existing state.
   const returning = useMemo(hasVisitedBefore, []);
-  // Returning visitors start free, with every correction already on (the
-  // "after" view the tour ends on) rather than replaying the story.
+  // Returning visitors skip the story and land in explore mode — but every
+  // visit still OPENS on the naive scoreboard, corrections off, same as a
+  // first visit and same as switching datasets. Landing pre-corrected would
+  // show the conclusion before the claim it overturns, which is the one thing
+  // this page exists to sequence. A shared link overrides this below.
   const [mode, setMode] = useState<"story" | "explore">(
     returning ? "explore" : "story",
   );
   const [step, setStep] = useState(0);
-  const [toggles, setToggles] = useState<Toggles>(
-    returning ? { bars: true, clust: true, pair: true } : STEPS[0].s,
-  );
+  const [toggles, setToggles] = useState<Toggles>(NO_CORRECTIONS);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
 
