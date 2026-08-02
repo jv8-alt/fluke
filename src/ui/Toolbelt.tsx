@@ -46,6 +46,7 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
   const [errors, setErrors] = useState<CsvError[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [urlMsg, setUrlMsg] = useState<{ text: string; warn: boolean } | null>(null);
+  const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const urlInput = useRef<HTMLInputElement>(null);
@@ -88,37 +89,45 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
   };
 
   /**
-   * Fill the box with the example URL and load it. Filling rather than
-   * loading silently is the point: the URL stays visible afterwards, so the
-   * shape of a link that works is itself part of the demonstration.
+   * Insert the example URL only — loading stays the user's decision, same as
+   * for a link they pasted themselves. Filling the box also leaves the URL
+   * visible, so the shape of a link that works is part of the demonstration.
    */
-  const loadExample = () => {
-    if (urlInput.current) urlInput.current.value = EXAMPLE_CSV_URL;
-    loadUrl();
+  const insertExample = () => {
+    if (!urlInput.current) return;
+    urlInput.current.value = EXAMPLE_CSV_URL;
+    urlInput.current.focus();
   };
 
   const loadUrl = async () => {
     const u = urlInput.current?.value.trim() ?? "";
     if (!u) {
-      setUrlMsg({ text: "Paste a link to a CSV file.", warn: false });
+      setUrlMsg({ text: "Paste a link to a CSV file.", warn: true });
       return;
     }
-    setUrlMsg({ text: "Fetching…", warn: false });
-    const res = await fetchCsvUrl(u);
+    // Progress lives on the button (see `loading`), not in a message line:
+    // a status message that appears and then disappears is more motion than
+    // a one-second fetch warrants.
+    setUrlMsg(null);
+    setLoading(true);
+    let res;
+    try {
+      res = await fetchCsvUrl(u);
+    } finally {
+      setLoading(false);
+    }
     if (!res.ok) {
       setUrlMsg({ text: res.message, warn: true });
       return;
     }
-    // Only claim success once the file has actually parsed — fetching a real
-    // CSV that isn't in our schema is the common case, and reporting "Loaded"
-    // beside a validation error reads as a contradiction.
+    // Success needs no message: the file appears as the selected card in the
+    // list above, which says the same thing without a line that has to be
+    // read and then dismissed. Only the failure — a file that arrived intact
+    // but isn't in our schema — still needs explaining.
     const parsed = handleText(res.text, u.split("/").pop() || "linked.csv");
     setUrlMsg(
       parsed
-        ? {
-            text: "Loaded from link. Links are shareable — Copy link reproduces this view.",
-            warn: false,
-          }
+        ? null
         : {
             text: "Downloaded that file, but it isn't in the expected format — see above.",
             warn: true,
@@ -229,16 +238,24 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
               if (e.key === "Enter") loadUrl();
             }}
           />
-          <button class="btn" onClick={loadUrl}>
-            Load
+          {/* The label stays in the DOM while loading and is only made
+              invisible, with the spinner overlaid — so the button keeps the
+              exact width of "Load" and nothing around it reflows. */}
+          <button
+            class="btn urlload"
+            onClick={loadUrl}
+            disabled={loading}
+            aria-busy={loading}
+          >
+            <span class={loading ? "invisible" : ""}>Load</span>
+            {loading && <span class="spinner" aria-label="Loading" />}
           </button>
         </div>
         <div class="fine urltip">
-          Nothing on hand?{" "}
-          <button class="lnk" onClick={loadExample}>
+          no link handy?{" "}
+          <button class="lnk" onClick={insertExample}>
             try our example file
-          </button>{" "}
-          — two models over two benchmarks, one of them grouped.
+          </button>
         </div>
         {urlMsg && <div class={`sub ${urlMsg.warn ? "warn" : ""}`}>{urlMsg.text}</div>}
       </div>
