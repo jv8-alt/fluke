@@ -7,6 +7,9 @@
 import { useEffect, useState } from "preact/hooks";
 import { fmt, gapSE, moe, type BenchmarkStats, type Toggles } from "./model";
 
+/** Miller, "Adding Error Bars to Evals" — every popover cites a section of it. */
+const PAPER_URL = "https://arxiv.org/abs/2411.00640";
+
 export type PopKind =
   | "moe"
   | "moeC"
@@ -162,6 +165,13 @@ export function PopoverHost({
         left: Math.min(window.scrollX + r.left, window.scrollX + window.innerWidth - 360),
         top: window.scrollY + r.bottom + 8,
       });
+      // Suppress the click's default action as well as its propagation. A
+      // trigger placed inside a <label> would otherwise activate that label,
+      // which forwards a click to the labelled control — toggling it and
+      // firing a second, non-trigger click that closes this popover again.
+      // Triggers are spans and plain buttons, so nothing else relies on a
+      // default action here.
+      e.preventDefault();
       e.stopPropagation();
     };
     document.addEventListener("click", onClick);
@@ -174,7 +184,14 @@ export function PopoverHost({
       <b>{pop.content.title}</b>
       <div style={{ marginTop: "6px" }}>{pop.content.body}</div>
       <div class="eq">{pop.content.eq}</div>
-      <div class="cite">{pop.content.cite} · arXiv:2411.00640</div>
+      {/* The citation is the "never a dead end for experts" exit: it names the
+          section and opens the paper itself, in a new tab so the reader
+          doesn't lose the view they were interrogating. */}
+      <div class="cite">
+        <a href={PAPER_URL} target="_blank" rel="noreferrer noopener">
+          {pop.content.cite} · arXiv:2411.00640
+        </a>
+      </div>
     </div>
   );
 }

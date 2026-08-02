@@ -251,7 +251,7 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
             {loading && <span class="spinner" aria-label="Loading" />}
           </button>
         </div>
-        <div class="fine urltip">
+        <div class="fine urltip" style={{ textAlign: "right" }}>
           no link handy?{" "}
           <button class="lnk" onClick={insertExample}>
             try our example file
