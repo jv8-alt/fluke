@@ -1,4 +1,4 @@
-# Design rationale
+# Design rationale for "Fluke"
 
 Live: [jv8-alt.github.io/fluke](https://jv8-alt.github.io/fluke/) · Method: Miller, [*Adding Error Bars to Evals*](https://arxiv.org/abs/2411.00640) (Anthropic, 2024) · Companion to the [README](../README.md)
 

@@ -1,6 +1,6 @@
 # Fluke — is that benchmark win real, or a fluke?
 
-**Live demo: https://jv8-alt.github.io/fluke/**
+**Live demo: https://jv8-alt.github.io/fluke**
 
 An interactive, zero-install web app that turns the statistics of
 [*Adding Error Bars to Evals*](https://arxiv.org/abs/2411.00640) (Miller,
@@ -23,7 +23,7 @@ the paper's corrections, one checkbox at a time.
   [raw link](https://raw.githubusercontent.com/jv8-alt/fluke/main/public/datasets/example-eval.csv)
   or download and drop it, either works.
 - **Share any view**: the Copy-link button encodes the dataset, toggles, and
-  even an uploaded CSV into the URL.
+  even an uploaded CSV into the URL (if it's small enough)
 - **Check an eval's eyesight**: an interactive power panel answers "how many
   questions does a benchmark need before a 3-point gap means anything?"
   (the paper's answer: ≈969, reproduced live).
@@ -39,7 +39,11 @@ number. What was missing is somewhere to navigate them — to **learn** what
 the corrections do by watching a verdict flip, to **check** whether a
 published claim survives them, and to **plan** what your own eval would need
 to resolve the gap you care about. That's an interface problem, not a math
-problem. See [docs/design.md](docs/design.md) for the full design rationale:
+problem. 
+
+## Design rationale
+
+See [docs/design.md](docs/design.md) for the full design rationale:
 why this approach, what's non-obvious, key tradeoffs, and where it would go
 next.
 

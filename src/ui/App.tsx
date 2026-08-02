@@ -234,7 +234,7 @@ export function App() {
     <div class="wrap">
       <header>
         <div>
-          <h1>Error Bars</h1>
+          <h1>Fluke</h1>
           <p class="tagline">
             A benchmark score is a poll, not a fact. See which wins survive the
             margin of error.
