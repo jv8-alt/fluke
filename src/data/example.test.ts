@@ -8,7 +8,7 @@
  */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseCsv } from "./csv";
+import { EXAMPLE_CSV_URL, parseCsv } from "./csv";
 import { computeBenchmarkStats, verdict, type Toggles } from "../ui/model";
 
 const text = readFileSync(
@@ -40,6 +40,24 @@ describe("example-eval.csv parses like any upload", () => {
   it("carries clusters on reading and none on arithmetic", () => {
     expect(bench("reading").nClusters).toBe(40);
     expect(bench("arithmetic").nClusters).toBeNull();
+  });
+});
+
+describe("the one-click example URL stays valid after merge", () => {
+  it("is pinned to main, not to a branch that gets deleted", () => {
+    // A branch ref works in review and 404s the moment the branch is deleted,
+    // which is exactly when everyone else starts using it.
+    expect(EXAMPLE_CSV_URL).toContain("/fluke/main/");
+    expect(EXAMPLE_CSV_URL).not.toMatch(/\/fluke\/(mikado|revert)[/-]/);
+  });
+
+  it("points at raw.githubusercontent.com, the host that allows browser fetches", () => {
+    expect(new URL(EXAMPLE_CSV_URL).host).toBe("raw.githubusercontent.com");
+  });
+
+  it("points at the path this file actually lives at", () => {
+    // Guards a rename of the CSV leaving the button aimed at nothing.
+    expect(EXAMPLE_CSV_URL.endsWith("/public/datasets/example-eval.csv")).toBe(true);
   });
 });
 

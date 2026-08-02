@@ -60,6 +60,19 @@ export type ParseResult =
 /** Benchmark name used when the optional `benchmark` column is absent. */
 export const DEFAULT_BENCHMARK = "uploaded";
 
+/**
+ * Ready-made CSV in this schema, offered as a one-click example in the URL
+ * box so people can watch the import path work before pointing it at their
+ * own data.
+ *
+ * MUST stay pinned to `main`. A branch ref (`.../fluke/mikado/X1/...`) fetches
+ * fine while that branch exists and then 404s the moment it is deleted after
+ * merge — a link that works in review and breaks in production. Asserted in
+ * src/data/example.test.ts.
+ */
+export const EXAMPLE_CSV_URL =
+  "https://raw.githubusercontent.com/jv8-alt/fluke/main/public/datasets/example-eval.csv";
+
 /** Stop collecting per-row errors past this many — a wall of hundreds of
  * identical messages helps nobody; the first screenful shows the pattern. */
 const MAX_ERRORS = 25;

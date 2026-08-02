@@ -6,7 +6,13 @@
  * everywhere.
  */
 import { useRef, useState } from "preact/hooks";
-import { csvTemplate, fetchCsvUrl, parseCsv, type CsvError } from "../data/csv";
+import {
+  csvTemplate,
+  EXAMPLE_CSV_URL,
+  fetchCsvUrl,
+  parseCsv,
+  type CsvError,
+} from "../data/csv";
 import { BUNDLED } from "../data/bundled";
 import type { EvalDataset } from "../data/types";
 
@@ -79,6 +85,16 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
     a.download = "example.csv";
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  /**
+   * Fill the box with the example URL and load it. Filling rather than
+   * loading silently is the point: the URL stays visible afterwards, so the
+   * shape of a link that works is itself part of the demonstration.
+   */
+  const loadExample = () => {
+    if (urlInput.current) urlInput.current.value = EXAMPLE_CSV_URL;
+    loadUrl();
   };
 
   const loadUrl = async () => {
@@ -216,6 +232,13 @@ export function Toolbelt({ currentId, uploadLabel, uploadSummary, onPick, onPars
           <button class="btn" onClick={loadUrl}>
             Load
           </button>
+        </div>
+        <div class="fine urltip">
+          Nothing on hand?{" "}
+          <button class="lnk" onClick={loadExample}>
+            try our example file
+          </button>{" "}
+          — two models over two benchmarks, one of them grouped.
         </div>
         {urlMsg && <div class={`sub ${urlMsg.warn ? "warn" : ""}`}>{urlMsg.text}</div>}
       </div>
