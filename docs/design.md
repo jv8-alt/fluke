@@ -125,4 +125,5 @@ Beyond that, I took some shortcuts to just get it basically working. My own marg
 - Planning: ~1 hour (including time spent outside Claude)
 - Building: ~2 hours
 - Tweaking/Fixing: ~1 hour
-- Demo and documentation: TBD
+- Demo and documentation: 1 hour
+- Total: 5 hours
