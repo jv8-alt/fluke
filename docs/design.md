@@ -84,6 +84,12 @@ I debated leaving this off because it's the biggest departure from the rest of t
 
 **~20 KB gzipped, Preact + Vite, hand-drawn SVG, no chart library, no LLM calls, no keys.** The constraint that kept the experience the product.
 
+## How it's built
+
+[**docs/architecture.md**](architecture.md) covers the implementation, with diagrams: the single pipeline every dataset flows through, the layering rule, which of the four estimators each checkbox selects, and where to extend it.
+
+Two of those are decisions rather than mechanics, so they belong here too. **There is only one pipeline** — a dropped file, a pasted link, a bundled snapshot and a shared upload all reach the same parser and the same estimators, so the demo can't quietly be better behaved than the tool. And **`src/stats` and `src/data` never import each other**: the maths knows nothing about files, the parsing does no arithmetic. That's what lets the statistics be tested as plain hand-computed arithmetic, and what would let a real backend slot in behind one function without an estimator changing.
+
 ## Where to go from here?
 
 ### Make sure it's true 😅

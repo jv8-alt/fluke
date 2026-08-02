@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 372" width="960" height="372" role="img" aria-label="Which estimator runs for which toggle combination. Columns: grouped questions counted once, off or on. Rows: compare question-by-question, off or on. The four cells are the unpaired naive, unpaired clustered, paired naive and paired clustered gap standard errors.">
+  <style>
+    .bg   { fill:#ffffff; stroke:#e2e8f0; stroke-width:1; }
+    .cell { fill:#f8fafc; stroke:#cbd5e1; stroke-width:1.25; rx:8; }
+    .best { fill:#f5f3ff; stroke:#a78bfa; stroke-width:2; rx:8; }
+    .t    { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; fill:#0f172a; }
+    .hdr  { font-size:12px; font-weight:700; fill:#4f46e5; }
+    .key  { font-size:15px; font-weight:700; }
+    .lbl  { font-size:12px; }
+    .sub  { font-size:11px; fill:#64748b; }
+    .cap  { font-size:11.5px; fill:#64748b; font-style:italic; }
+    .eq   { font-family:Georgia,'Times New Roman',serif; font-style:italic; font-size:12px; fill:#334155; }
+  </style>
+
+  <rect class="bg" x="0.5" y="0.5" width="959" height="371"/>
+
+  <text class="t cap" x="24" y="26">gapSE() picks one of four, from two checkboxes</text>
+
+  <!-- column headers -->
+  <text class="t hdr" x="190" y="62">“Count grouped questions once”  —  OFF</text>
+  <text class="t hdr" x="574" y="62">“Count grouped questions once”  —  ON</text>
+
+  <!-- row labels -->
+  <text class="t hdr" x="24" y="118">“Compare</text>
+  <text class="t hdr" x="24" y="134">question-by-</text>
+  <text class="t hdr" x="24" y="150">question”</text>
+  <text class="t hdr" x="24" y="170">OFF</text>
+
+  <text class="t hdr" x="24" y="256">“Compare</text>
+  <text class="t hdr" x="24" y="272">question-by-</text>
+  <text class="t hdr" x="24" y="288">question”</text>
+  <text class="t hdr" x="24" y="308">ON</text>
+
+  <!-- unpaired / naive -->
+  <rect class="cell" x="190" y="76" width="366" height="106"/>
+  <text class="t key" x="206" y="100">uN</text>
+  <text class="t lbl" x="206" y="120">Treats the two scores as independent</text>
+  <text class="t eq" x="206" y="142">SE = √( SE²A + SE²B )</text>
+  <text class="t sub" x="206" y="164">Every question counted as its own evidence · §4.1</text>
+
+  <!-- unpaired / clustered -->
+  <rect class="cell" x="574" y="76" width="362" height="106"/>
+  <text class="t key" x="590" y="100">uC</text>
+  <text class="t lbl" x="590" y="120">Independent scores, groups counted once</text>
+  <text class="t eq" x="590" y="142">SE² per model summed within each group first</text>
+  <text class="t sub" x="590" y="164">Usually the widest margin of the four · §2.2, Eq. 4</text>
+
+  <!-- paired / naive -->
+  <rect class="cell" x="190" y="204" width="366" height="106"/>
+  <text class="t key" x="206" y="228">pN</text>
+  <text class="t lbl" x="206" y="248">Subtract per question, then average</text>
+  <text class="t eq" x="206" y="270">SE = √( Var(sA − sB) / n )</text>
+  <text class="t sub" x="206" y="292">Shared question difficulty cancels · §4.2, Eq. 7–8</text>
+
+  <!-- paired / clustered -->
+  <rect class="best" x="574" y="204" width="362" height="106"/>
+  <text class="t key" x="590" y="228">pC</text>
+  <text class="t lbl" x="590" y="248">Both corrections at once</text>
+  <text class="t eq" x="590" y="270">clustered SE of the per-question differences</text>
+  <text class="t sub" x="590" y="292">The honest default when data is grouped AND paired</text>
+
+  <text class="t cap" x="24" y="342">With “Margins of error” unchecked none of these run at all — the verdict is simply whoever scored higher, which is the</text>
+  <text class="t cap" x="24" y="358">claim the whole app exists to interrogate. Per-model margins use the same N/C choice, without the paired variants.</text>
+</svg>

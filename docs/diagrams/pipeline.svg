@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" width="960" height="340" role="img" aria-label="Data pipeline: bundled CSV, dropped file, pasted URL and shared links all pass through parseCsv into an EvalDataset; the guided demo is generated in code and joins at the same point. The dataset then flows through pure statistics into the view model and UI.">
+  <style>
+    .bg   { fill:#ffffff; stroke:#e2e8f0; stroke-width:1; }
+    .box  { fill:#f8fafc; stroke:#cbd5e1; stroke-width:1.25; rx:8; }
+    .key  { fill:#eef2ff; stroke:#c7d2fe; stroke-width:1.5; rx:8; }
+    .pure { fill:#f5f3ff; stroke:#ddd6fe; stroke-width:1.5; rx:8; }
+    .t    { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; fill:#0f172a; }
+    .lbl  { font-size:13px; font-weight:600; }
+    .sub  { font-size:11px; fill:#64748b; font-weight:400; }
+    .cap  { font-size:11.5px; fill:#64748b; font-style:italic; }
+    .ln   { stroke:#94a3b8; stroke-width:1.4; fill:none; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0.5" y="0.5" width="959" height="339"/>
+
+  <!-- sources -->
+  <text class="t cap" x="28" y="28">where data comes from</text>
+  <rect class="box" x="28" y="40" width="176" height="40"/>
+  <text class="t lbl" x="40" y="58">Bundled CSV</text>
+  <text class="t sub" x="40" y="72">public/datasets/*.csv</text>
+
+  <rect class="box" x="28" y="92" width="176" height="40"/>
+  <text class="t lbl" x="40" y="110">Dropped file</text>
+  <text class="t sub" x="40" y="124">drag or browse</text>
+
+  <rect class="box" x="28" y="144" width="176" height="40"/>
+  <text class="t lbl" x="40" y="162">Pasted URL</text>
+  <text class="t sub" x="40" y="176">fetchCsvUrl</text>
+
+  <rect class="box" x="28" y="196" width="176" height="40"/>
+  <text class="t lbl" x="40" y="214">Shared link</text>
+  <text class="t sub" x="40" y="228">decodeShare (#csv=…)</text>
+
+  <!-- parser -->
+  <rect class="key" x="240" y="116" width="150" height="48"/>
+  <text class="t lbl" x="252" y="136">parseCsv</text>
+  <text class="t sub" x="252" y="152">one parser, one</text>
+  <text class="t sub" x="252" y="164">set of error messages</text>
+
+  <!-- dataset -->
+  <rect class="key" x="426" y="116" width="170" height="48"/>
+  <text class="t lbl" x="438" y="136">EvalDataset</text>
+  <text class="t sub" x="438" y="152">aligned per-item score</text>
+  <text class="t sub" x="438" y="164">arrays + cluster labels</text>
+
+  <!-- stats -->
+  <rect class="pure" x="632" y="116" width="150" height="48"/>
+  <text class="t lbl" x="644" y="136">src/stats</text>
+  <text class="t sub" x="644" y="152">pure, zero-dependency</text>
+  <text class="t sub" x="644" y="164">estimators</text>
+
+  <!-- ui -->
+  <rect class="key" x="818" y="116" width="120" height="48"/>
+  <text class="t lbl" x="830" y="136">Verdict</text>
+  <text class="t sub" x="830" y="152">“real ✓” /</text>
+  <text class="t sub" x="830" y="164">“too close”</text>
+
+  <!-- source arrows into the parser -->
+  <path class="ln" marker-end="url(#a)" d="M204,60  C 222,60 222,130 238,134"/>
+  <path class="ln" marker-end="url(#a)" d="M204,112 C 222,112 222,136 238,138"/>
+  <path class="ln" marker-end="url(#a)" d="M204,164 C 222,164 222,146 238,144"/>
+  <path class="ln" marker-end="url(#a)" d="M204,216 C 222,216 222,152 238,150"/>
+
+  <path class="ln" marker-end="url(#a)" d="M390,140 L 424,140"/>
+  <path class="ln" marker-end="url(#a)" d="M596,140 L 630,140"/>
+  <path class="ln" marker-end="url(#a)" d="M782,140 L 816,140"/>
+
+  <!-- generated demo bypasses the parser -->
+  <rect class="box" x="28" y="264" width="362" height="44"/>
+  <text class="t lbl" x="40" y="284">Guided demo — generated in code</text>
+  <text class="t sub" x="40" y="299">src/data/papermode.ts · seeded, calibrated to the paper</text>
+  <path class="ln" stroke-dasharray="4 3" marker-end="url(#a)" d="M390,286 C 470,286 470,200 505,166"/>
+  <text class="t cap" x="404" y="252">the one source that skips the parser</text>
+</svg>

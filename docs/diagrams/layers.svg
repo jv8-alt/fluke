@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 326" width="960" height="326" role="img" aria-label="Layer map: src/stats and src/data are independent siblings that do not import each other. src/ui depends on both, and src/ui/model.ts is the only place they meet.">
+  <style>
+    .bg   { fill:#ffffff; stroke:#e2e8f0; stroke-width:1; }
+    .ui   { fill:#eef2ff; stroke:#c7d2fe; stroke-width:1.5; rx:10; }
+    .pure { fill:#f5f3ff; stroke:#ddd6fe; stroke-width:1.5; rx:10; }
+    .data { fill:#f8fafc; stroke:#cbd5e1; stroke-width:1.5; rx:10; }
+    .file { fill:#ffffff; stroke:#e2e8f0; stroke-width:1; rx:5; }
+    .t    { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; fill:#0f172a; }
+    .h    { font-size:14px; font-weight:700; }
+    .lbl  { font-size:11.5px; }
+    .sub  { font-size:11px; fill:#64748b; }
+    .cap  { font-size:11.5px; fill:#64748b; font-style:italic; }
+    .ln   { stroke:#94a3b8; stroke-width:1.4; fill:none; }
+    .no   { stroke:#cbd5e1; stroke-width:1.4; fill:none; stroke-dasharray:5 4; }
+  </style>
+  <defs>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0.5" y="0.5" width="959" height="325"/>
+
+  <!-- ui layer -->
+  <rect class="ui" x="250" y="24" width="460" height="76"/>
+  <text class="t h" x="266" y="46">src/ui</text>
+  <text class="t sub" x="266" y="62">Preact components + the view model</text>
+  <rect class="file" x="266" y="70" width="96" height="20"/><text class="t lbl" x="274" y="84">model.ts</text>
+  <rect class="file" x="370" y="70" width="80" height="20"/><text class="t lbl" x="378" y="84">App.tsx</text>
+  <rect class="file" x="458" y="70" width="104" height="20"/><text class="t lbl" x="466" y="84">Toolbelt.tsx</text>
+  <rect class="file" x="570" y="70" width="124" height="20"/><text class="t lbl" x="578" y="84">PowerPanel.tsx</text>
+
+  <!-- stats layer -->
+  <rect class="pure" x="40" y="176" width="380" height="94"/>
+  <text class="t h" x="56" y="198">src/stats</text>
+  <text class="t sub" x="56" y="214">pure functions · imports nothing outside itself</text>
+  <rect class="file" x="56" y="222" width="106" height="20"/><text class="t lbl" x="64" y="236">descriptive.ts</text>
+  <rect class="file" x="170" y="222" width="98" height="20"/><text class="t lbl" x="178" y="236">clustered.ts</text>
+  <rect class="file" x="276" y="222" width="80" height="20"/><text class="t lbl" x="284" y="236">paired.ts</text>
+  <rect class="file" x="56" y="246" width="80" height="20"/><text class="t lbl" x="64" y="260">power.ts</text>
+
+  <!-- data layer -->
+  <rect class="data" x="540" y="176" width="380" height="94"/>
+  <text class="t h" x="556" y="198">src/data</text>
+  <text class="t sub" x="556" y="214">shapes and moves data · never computes a statistic</text>
+  <rect class="file" x="556" y="222" width="74" height="20"/><text class="t lbl" x="564" y="236">types.ts</text>
+  <rect class="file" x="638" y="222" width="66" height="20"/><text class="t lbl" x="646" y="236">csv.ts</text>
+  <rect class="file" x="712" y="222" width="88" height="20"/><text class="t lbl" x="720" y="236">bundled.ts</text>
+  <rect class="file" x="808" y="222" width="82" height="20"/><text class="t lbl" x="816" y="236">share.ts</text>
+  <rect class="file" x="556" y="246" width="104" height="20"/><text class="t lbl" x="564" y="260">papermode.ts</text>
+
+  <!-- dependencies -->
+  <path class="ln" marker-end="url(#b)" d="M400,150 C 340,150 240,168 232,174"/>
+  <path class="ln" marker-end="url(#b)" d="M560,150 C 620,150 720,168 728,174"/>
+  <text class="t cap" x="392" y="126">src/ui is the only layer that imports both</text>
+
+  <!-- the non-dependency, drawn explicitly because it is the point -->
+  <path class="no" d="M424,223 L 536,223"/>
+  <circle cx="480" cy="223" r="11" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.4"/>
+  <path d="M474,217 L486,229 M486,217 L474,229" stroke="#94a3b8" stroke-width="1.6"/>
+  <text class="t cap" x="404" y="300">neither imports the other — statistics never touch parsing, parsing never does maths</text>
+</svg>

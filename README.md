@@ -47,6 +47,13 @@ See [docs/design.md](docs/design.md) for the full design rationale:
 why this approach, what's non-obvious, key tradeoffs, and where it would go
 next.
 
+## Architecture
+
+See [docs/architecture.md](docs/architecture.md) for how it's built: the
+single pipeline every dataset flows through, the layering rule that keeps the
+statistics independent of the parsing, which of the four estimators each
+checkbox selects, and where to extend it.
+
 ## Development
 
 Requires Node 22+.
